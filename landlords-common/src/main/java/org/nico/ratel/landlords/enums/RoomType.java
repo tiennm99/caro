@@ -2,9 +2,9 @@ package org.nico.ratel.landlords.enums;
 
 public enum RoomType {
 
-	PVP("玩家对战"),
+	PVP("Player vs Player"),
 
-	PVE("人机对战"),
+	PVE("Player vs AI"),
 
 	;
 	private String msg;

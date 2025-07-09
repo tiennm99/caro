@@ -2,11 +2,11 @@ package org.nico.ratel.landlords.enums;
 
 public enum RoomStatus {
 
-	BLANK("空闲"),
+	BLANK("Idle"),
 
-	WAIT("等待"),
+	WAIT("Waiting"),
 
-	STARTING("开始"),
+	STARTING("Starting"),
 
 
 	;

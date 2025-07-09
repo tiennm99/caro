@@ -1,164 +1,164 @@
 [toc]
-# Ratel-Client开发文档
-## 介绍
-### 什么是Ratel
-[Ratel](https://github.com/ainilili/ratel) 是一个可以在命令行中玩斗地主的项目，可以使用小巧的jar包在拥有JVM环境的终端中进行游戏，同时支持人人对战和人机对战两种模式，丰富你的空闲时间！
+# Ratel-Client Development Documentation
+## Introduction
+### What is Ratel
+[Ratel](https://github.com/ainilili/ratel) is a project that allows you to play Landlords (Dou Di Zhu) in the command line. You can use a compact jar package to play games in terminals with JVM environment, supporting both player vs player and player vs AI modes to enrich your leisure time!
 
-Ratel使用Java语言开发，[Netty 4.x](https://github.com/netty/netty)网络框架搭配[protobuf](https://github.com/protocolbuffers/protobuf)数据协议，可以支持多客户端同时游戏。
+Ratel is developed using Java language, with [Netty 4.x](https://github.com/netty/netty) network framework combined with [protobuf](https://github.com/protocolbuffers/protobuf) data protocol, supporting multiple clients playing simultaneously.
 
-### Ratel-Client扩展
-Ratel面向响应式架构，通过事件码进行通讯，对于Ratel-Client，支持跨平台扩展，换一种说法，任何后端语言都可以开发Ratel-Client！
+### Ratel-Client Extension
+Ratel is designed with reactive architecture, communicating through event codes. For Ratel-Client, it supports cross-platform extension. In other words, any backend language can develop Ratel-Client!
 
-在开发Ratel-Client前应该知道：
-- Ratel Server-Client交互网络协议为``TCP/IP``。
-- Ratel Server-Client交互数据协议为[protobuf](https://github.com/protocolbuffers/protobuf)。
-- Ratel以事件为驱动，在Client将各个环节串联起来。
-- Ratel所有的文案都由Client显示。
+Before developing Ratel-Client, you should know:
+- Ratel Server-Client interaction network protocol is ``TCP/IP``.
+- Ratel Server-Client interaction data protocol is [protobuf](https://github.com/protocolbuffers/protobuf).
+- Ratel is event-driven, connecting various components in the Client.
+- All text content in Ratel is displayed by the Client.
 
-## 对接
-### 架构你的客户端
-我们可以使用任何后端语言就重写Ratel客户端，Ratel默认的客户端的由Java语言编写，如果你想使用其他语言重写，以下是我们推荐的一种架构：
+## Integration
+### Architect Your Client
+We can rewrite the Ratel client using any backend language. The default Ratel client is written in Java. If you want to rewrite it in other languages, here's a recommended architecture:
 ![](https://user-gold-cdn.xitu.io/2018/11/17/16720fa649dfaea0?w=898&h=500&f=png&s=33655)
 
-这种架构对于事件的处理非常友好，你可以设计一个抽象的``Event-Listener``接口，然后开发不同的实现去处理不同``CODE``对应的响应数据，例如一个而简单的例子——Poker的显示，以下是我们的处理流程的伪代码:
+This architecture is very friendly for event handling. You can design an abstract ``Event-Listener`` interface, then develop different implementations to handle response data for different ``CODE`` values. For example, a simple example - Poker display, here's the pseudo code for our processing flow:
 ```
-1、对服务端响应数据解码 -> 
+1. Decode server response data -> 
 
 decode(msg)
 
-2、解码后的数据 ->
+2. Decoded data ->
 
 ClientData{
     String code;
     String data;
 }
 
-3、通过code寻找对应的EventListener ->
+3. Find corresponding EventListener through code ->
 
 showPokersEventListener = Map<code, EventListener>.get(code)
 
-4、处理响应数据 ->
+4. Process response data ->
 
 showPokersEventListener.call(server, data){
     show(data);
     server.write(msg);
 }
 ```
-以上只是简单的``Server-Client``的交互流程，有时候可能会出现``Client-Client``的场景，例如客户端的选项面板的显示，在我们从A层切换到B层，再从B层返回到A层，这时就需要做``Client-Client``的交互。
+The above is just a simple ``Server-Client`` interaction flow. Sometimes there might be ``Client-Client`` scenarios, such as displaying client option panels. When we switch from layer A to layer B, then return from layer B to layer A, we need to handle ``Client-Client`` interactions.
 
-当然，大多数的交互重点集中在``Server-Client``，而另一方面，客户端大多都是在处理并显示服务端响应的数据，对于真正的业务交互很少，这对于客户端来说，只要将事件绝对的丰富，那么客户端的流程就会绝对的灵活。因此，Ratel的客户端响应事件相比于服务端的响应事件数量多了几倍有余，所以这对于客户端的架构要求就是要有足够的灵活性，能够支持以下两个业务流：
+Of course, most interactions focus on ``Server-Client``. On the other hand, clients mostly handle and display server response data, with little actual business interaction. For clients, as long as events are absolutely rich, the client flow will be absolutely flexible. Therefore, Ratel's client response events are several times more numerous than server response events, so the architectural requirement for clients is to have sufficient flexibility to support the following two business flows:
 - Server-Client-Server
 - Server-Client-Client-Server
 
-之后，我们进入下一步！
-### 定义数据实体
-对于客户端和服务端交互的数据，为了承载，我们需要设计两个类去存放编解码后的数据，值得一提的是，客户端和服务端的数据结构一样，都由``CODE``、``DATA``和``INFO``三个字段组成:
-- CODE - 对应的事件
-- DATA - 传递的数据
-- INFO - 信息(暂时用不到)
+Next, let's move to the next step!
+### Define Data Entities
+For data interaction between client and server, we need to design two classes to store encoded and decoded data. It's worth mentioning that client and server have the same data structure, both composed of three fields: ``CODE``, ``DATA``, and ``INFO``:
+- CODE - Corresponding event
+- DATA - Transmitted data
+- INFO - Information (not used for now)
 
-我们的编解码方式为``Protobuf``序列化，参考文件请看[这里](https://github.com/ainilili/ratel/tree/master/protoc-resource)。
+Our encoding/decoding method is ``Protobuf`` serialization. Please refer to the files [here](https://github.com/ainilili/ratel/tree/master/protoc-resource).
 
-### 对接协议
-在我们做好对接的准备工作之后，可以通过以下协议文档开始实现客户端的业务!
+### Integration Protocol
+After preparing for integration, you can start implementing client business through the following protocol documentation!
 
-#### 客户端事件
-##### 连接成功事件
+#### Client Events
+##### Connection Success Event
  - ``CODE`` - CODE_CLIENT_CONNECT
  - ``TYPE`` - TEXT
- - ``DATA`` - 客户端被分配的ID
+ - ``DATA`` - Client assigned ID
 
-##### 退出房间事件
+##### Exit Room Event
  - ``CODE`` - CODE_CLIENT_EXIT
  - ``TYPE`` - JSON
- - ``DATA`` - 如下
+ - ``DATA`` - As follows
 
-字段名 | 含义
+Field Name | Meaning
 ---|---
-roomId | 房间ID
-exitClientId | 退出者ID
-exitClientNickname | 退出者昵称
+roomId | Room ID
+exitClientId | Exiting player ID
+exitClientNickname | Exiting player nickname
 
-参考数据
+Reference data:
 ```
 {"roomId":14,"exitClientId":64330,"exitClientNickname":"nico"}
 ```
 
-##### 客户端踢出事件
+##### Client Kick Event
  - ``CODE`` - CODE_CLIENT_KICK
  - ``TYPE`` - Text
  - ``DATA`` - NULL
 
-##### 设置昵称事件
+##### Set Nickname Event
  - ``CODE`` - CODE_CLIENT_NICKNAME_SET
  - ``TYPE`` - JSON
- - ``DATA`` - 如下
+ - ``DATA`` - As follows
 
-字段名 | 含义
+Field Name | Meaning
 ---|---
-invalidLength | 有效长度，当设置昵称超过10个字节会返回此字段
+invalidLength | Valid length, this field is returned when setting nickname exceeds 10 bytes
 
-参考数据：
+Reference data:
 ```
 {"invalidLength":10}
 ```
 
-##### 抢地主-地主诞生事件
+##### Landlord Election - Landlord Confirmed Event
  - ``CODE`` - CODE_GAME_LANDLORD_CONFIRM
  - ``TYPE`` - JSON
- - ``DATA`` - 如下
+ - ``DATA`` - As follows
 
-字段名 | 含义
+Field Name | Meaning
 ---|---
-roomId | 房间ID
-roomOwner | 房间所有者昵称
-roomClientCount | 房间人数
-landlordNickname | 地主昵称
-landlordId | 地主ID
-additionalPokers | 额外的三张牌
+roomId | Room ID
+roomOwner | Room owner nickname
+roomClientCount | Room player count
+landlordNickname | Landlord nickname
+landlordId | Landlord ID
+additionalPokers | Additional three cards
 
-参考数据：
+Reference data:
 ```
 {"roomId":14,"roomOwner":"nico","roomClientCount":3,"landlordNickname":"robot_2","landlordId":-8,"additionalPokers":[{"level":"LEVEL_5","type":"DIAMOND"},{"level":"LEVEL_6","type":"CLUB"},{"level":"LEVEL_A","type":"DIAMOND"}]}
 ```
 
-##### 抢地主-大家都没抢事件
+##### Landlord Election - No One Elected Event
  - ``CODE`` - CODE_GAME_LANDLORD_CYCLE
  - ``TYPE`` - TEXT
  - ``DATA`` - NULL
 
-TIP：该事件触发后会连续触发重新游戏事件
+TIP: After this event triggers, a restart game event will be triggered continuously
 
-##### 抢地主-抢地主决策事件
+##### Landlord Election - Landlord Election Decision Event
  - ``CODE`` - CODE_GAME_LANDLORD_ELECT
  - ``TYPE`` - JSON
- - ``DATA`` - 如下
+ - ``DATA`` - As follows
 
-字段名 | 含义
+Field Name | Meaning
 ---|---
-roomId | 房间ID
-roomOwner | 房间所有者昵称
-roomClientCount | 房间人数
-preClientNickname | 上一个客户端的昵称
-nextClientNickname | 下一个客户端的昵称
-nextClientId | 下一个客户端的ID
+roomId | Room ID
+roomOwner | Room owner nickname
+roomClientCount | Room player count
+preClientNickname | Previous client nickname
+nextClientNickname | Next client nickname
+nextClientId | Next client ID
 
-参考数据：
+Reference data:
 ```
 {"roomId":14,"roomOwner":"nico","roomClientCount":3,"preClientNickname":"nico1","nextClientNickname":"nico2","nextClientId":2}
 ```
 
-##### 游戏结束事件
+##### Game Over Event
  - ``CODE`` - CODE_GAME_OVER
  - ``TYPE`` - JSON
- - ``DATA`` - 如下
+ - ``DATA`` - As follows
 
-字段名 | 含义
+Field Name | Meaning
 ---|---
-winnerNickname | 获胜者昵称
-winnerType | 获胜者类型（地主？农民）
+winnerNickname | Winner nickname
+winnerType | Winner type (Landlord? Peasant)
 
-参考数据：
+Reference data:
 ```
 {"winnerNickname":"nico","winnerType":"LANDLORD?PEASANT"}
 ```

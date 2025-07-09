@@ -8,79 +8,79 @@
 ![Build ratel(Java with Maven)](https://github.com/ainilili/ratel/workflows/Build%20ratel(Java%20with%20Maven)/badge.svg?branch=master)
 ![Docker Image Version (latest by date)](https://img.shields.io/docker/v/kebyn/ratel?label=Docker&logo=docker&style=flat-square)
 
-# 本项目不再维护，请体验[👉 全新版本](https://github.com/ratel-online/server)，支持癞子模式，德州扑克，增加超时机制，完美复现欢乐斗地主，[在线体验地址](http://ratel.isnico.com/)
+# This project is no longer maintained, please try the [👉 new version](https://github.com/ratel-online/server), which supports joker mode, Texas Hold'em, adds timeout mechanism, and perfectly recreates Happy Landlords, [online experience](http://ratel.isnico.com/)
 
-## 介绍
-基于Netty实现的命令行斗地主游戏，为划水摸鱼而生~
+## Introduction
+Command-line Landlords game based on Netty, born for procrastination and leisure~
 
-## 安装
-首先下载打包，确保本地安装有maven及JRE环境：
+## Installation
+First download and package, ensure maven and JRE environment are installed locally:
 ```powershell
 git clone https://github.com/ainilili/ratel.git
 cd ratel
 mvn install package
 ```
-接下来分别运行 ``landlords-client`` 和 ``landlords-server`` 的 ``target`` 文件夹下的Jar包：
+Next, run the Jar packages in the ``target`` folders of ``landlords-client`` and ``landlords-server`` respectively:
 ```powershell
 java -jar landlords-server/target/landlords-server-#{version}.jar -p 1024
 java -jar landlords-client/target/landlords-client-#{version}.jar -p 1024 -h 127.0.0.1
 ```
-客户端亦可直接运行，程序会自动拉取[Serverlist](https://github.com/ainilili/ratel/blob/master/serverlist.json)中的公网服务器：
+The client can also run directly, the program will automatically pull public servers from [Serverlist](https://github.com/ainilili/ratel/blob/master/serverlist.json):
 ```powershell
 java -jar landlords-client/target/landlords-client-#{version}.jar
 ```
-**注意**，实际运行中请将``#{version}``改为当前运行版本！
-## 玩法介绍
-在线试玩：[传送门](http://ratel.isnico.com)
+**Note**, please replace ``#{version}`` with the current running version in actual execution!
+## Gameplay Introduction
+Online trial: [Portal](http://ratel.isnico.com)
 
 ![demo](demo.gif)
 
-### 出牌规则
-所有牌型：
+### Card Playing Rules
+All card types:
 ```
 ┌──┐──┐──┐──┐──┐──┐──┐──┐──┐──┐──┐──┐──┐──┐──┐
 │3 |4 |5 |6 |7 |8 |9 |10|J |Q |K |A |2 |S |X |
 │♦ |♦ |♦ |♦ |♦ |♦ |♦ |♦ |♦ |♦ |♦ |♦ |♦ |  |  |
 └──┘──┘──┘──┘──┘──┘──┘──┘──┘──┘──┘──┘──┘──┘──┘
 ```
-示例：
- - 王炸：``sx``
- - 顺子：``34567``
- - 三带一：``3334``
- - 飞机：``333444a2``
- - 单张10：``0``或者``t``
- - 单张A：``a``或者``1``
- - 封顶顺子：``34567890jqka``
- - 不想出牌： ``pass``或``p``
- - 退出： ``exit``或者``e``
- - [更多](https://zh.wikipedia.org/zh-sg/%E9%AC%A5%E5%9C%B0%E4%B8%BB)
+Examples:
+ - King bomb: ``sx``
+ - Straight: ``34567``
+ - Three with one: ``3334``
+ - Airplane: ``333444a2``
+ - Single 10: ``0`` or ``t``
+ - Single A: ``a`` or ``1``
+ - Max straight: ``34567890jqka``
+ - Don't want to play: ``pass`` or ``p``
+ - Exit: ``exit`` or ``e``
+ - [More](https://zh.wikipedia.org/zh-sg/%E9%AC%A5%E5%9C%B0%E4%B8%BB)
 
-#### 协议支持
+#### Protocol Support
  - TCP
  - Websocket
 
-Websocket协议的地址为 ``ws://host:port/ratel``，Websocket的端口需要在原端口基础上加1 （如果tcp端口为1024，则ws端口需要为1025）
-## 划水俱乐部
-QQ群 ``948365095``，划水一时爽，一直划水一直爽！
+Websocket protocol address is ``ws://host:port/ratel``, Websocket port needs to be original port plus 1 (if tcp port is 1024, then ws port should be 1025)
+## Procrastination Club
+QQ Group ``948365095``, procrastination feels great for a moment, keep procrastinating always feels great!
 
-## 生态
+## Ecosystem
  - [go-ratel-client](https://github.com/ZuoFuhong/go-ratel)
  - [javafx-ratel-client](https://github.com/marmot-z/javafx-ratel-client)
  - [javascript-ratel-client](https://github.com/marmot-z/js-ratel-client)
  
-## 教学
- - [Ratel浅析] (https://github.com/HelloGitHub-Team/Article/blob/master/contents/Java/landlords/content.md)
- - [Ratel玩法视频教学] (https://www.bilibili.com/video/av97603585)
+## Tutorial
+ - [Ratel Analysis] (https://github.com/HelloGitHub-Team/Article/blob/master/contents/Java/landlords/content.md)
+ - [Ratel Gameplay Video Tutorial] (https://www.bilibili.com/video/av97603585)
 
-## 更新日志
- - [更新日志](https://github.com/ainilili/ratel/blob/master/UPDATE.md)
+## Changelog
+ - [Changelog](https://github.com/ainilili/ratel/blob/master/UPDATE.md)
 
-## 计划
- - 支持高级难度机器人
+## Plans
+ - Support for advanced difficulty robots
 
 ## More
- - [Serverlist.json](https://github.com/ainilili/ratel/blob/master/serverlist.json) 是当前的服务器列表, 如果你的服务器部署着当前最新版本的服务端并且分享给大家，可以通过PR提交给我们!
- - 如果您想贡献代码，非常欢迎提``PR``，我们将会合并优秀的代码.
- - 如果您发现了``Bug``，非常欢迎提``Issue``给我们.
- - 欢迎扩展其他语言的客户端.
- - 联系我们请发邮件到 ``ainililia@163.com``.
+ - [Serverlist.json](https://github.com/ainilili/ratel/blob/master/serverlist.json) is the current server list. If your server is deployed with the current latest version of the server and shared with everyone, you can submit it to us through PR!
+ - If you want to contribute code, PRs are very welcome, we will merge excellent code.
+ - If you found a bug, Issues are very welcome.
+ - Welcome to extend clients in other languages.
+ - Contact us by email at ``ainililia@163.com``.

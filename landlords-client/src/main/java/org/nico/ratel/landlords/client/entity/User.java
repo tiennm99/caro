@@ -3,10 +3,10 @@ package org.nico.ratel.landlords.client.entity;
 public class User {
     public static final User INSTANCE = new User();
 
-    /** 是否游戏中 */
+    /** Whether in game */
     private volatile boolean isPlaying = false;
 
-    /** 是否观战中 */
+    /** Whether spectating */
     private volatile boolean isWatching = false;
 
     private String nickname = "player";

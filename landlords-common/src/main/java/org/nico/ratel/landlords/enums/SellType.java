@@ -2,41 +2,41 @@ package org.nico.ratel.landlords.enums;
 
 public enum SellType {
 
-	ILLEGAL("非合法"),
+	ILLEGAL("Illegal"),
 
-	BOMB("炸弹"),
+	BOMB("Bomb"),
 
-	KING_BOMB("王炸"),
+	KING_BOMB("King bomb"),
 
-	SINGLE("单个牌"),
+	SINGLE("Single card"),
 
-	DOUBLE("对子牌"),
+	DOUBLE("Pair"),
 
-	THREE("三张牌"),
+	THREE("Three of a kind"),
 
-	THREE_ZONES_SINGLE("三带单"),
+	THREE_ZONES_SINGLE("Three with single"),
 
-	THREE_ZONES_DOUBLE("三带对"),
+	THREE_ZONES_DOUBLE("Three with pair"),
 
-	FOUR_ZONES_SINGLE("四带单"),
+	FOUR_ZONES_SINGLE("Four with single"),
 
-	FOUR_ZONES_DOUBLE("四带对"),
+	FOUR_ZONES_DOUBLE("Four with pair"),
 
-	SINGLE_STRAIGHT("单顺子"),
+	SINGLE_STRAIGHT("Single straight"),
 
-	DOUBLE_STRAIGHT("双顺子"),
+	DOUBLE_STRAIGHT("Double straight"),
 
-	THREE_STRAIGHT("三顺子"),
+	THREE_STRAIGHT("Triple straight"),
 
-	FOUR_STRAIGHT("四顺子"),
+	FOUR_STRAIGHT("Quadruple straight"),
 
-	THREE_STRAIGHT_WITH_SINGLE("飞机带单牌"),
+	THREE_STRAIGHT_WITH_SINGLE("Airplane with single cards"),
 
-	THREE_STRAIGHT_WITH_DOUBLE("飞机带对牌"),
+	THREE_STRAIGHT_WITH_DOUBLE("Airplane with pairs"),
 
-	FOUR_STRAIGHT_WITH_SINGLE("四顺子带单"),
+	FOUR_STRAIGHT_WITH_SINGLE("Quadruple straight with single"),
 
-	FOUR_STRAIGHT_WITH_DOUBLE("四顺子带对"),
+	FOUR_STRAIGHT_WITH_DOUBLE("Quadruple straight with pair"),
 	;
 
 	private String msg;

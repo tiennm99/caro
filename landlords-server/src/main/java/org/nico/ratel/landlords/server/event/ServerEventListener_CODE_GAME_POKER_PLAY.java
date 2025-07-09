@@ -72,7 +72,7 @@ public class ServerEventListener_CODE_GAME_POKER_PLAY implements ServerEventList
 		clientSide.addRound();
 
 		if (currentPokerSell.getSellType() == SellType.BOMB || currentPokerSell.getSellType() == SellType.KING_BOMB) {
-			// 炸弹积分翻倍
+			// Bomb doubles the score
 			room.increaseRate();
 		}
 
@@ -128,7 +128,7 @@ public class ServerEventListener_CODE_GAME_POKER_PLAY implements ServerEventList
 	private void setRoomClientScore(Room room, ClientType winnerType) {
 		int landLordScore = room.getScore() * 2;
 		int peasantScore = room.getScore();
-		// 输的一方分数为负
+		// Losing side gets negative score
 		if (winnerType == ClientType.LANDLORD) {
 			peasantScore = -peasantScore;
 		} else {
@@ -206,10 +206,10 @@ public class ServerEventListener_CODE_GAME_POKER_PLAY implements ServerEventList
 	}
 
 	/**
-	 * 通知观战者出牌信息
+	 * Notify spectators of card playing information
 	 *
-	 * @param room	房间
-	 * @param result	出牌信息
+	 * @param room	room
+	 * @param result	card playing information
 	 */
 	private void notifyWatcherPlayPoker(Room room, String result) {
 		for (ClientSide watcher : room.getWatcherList()) {
@@ -218,10 +218,10 @@ public class ServerEventListener_CODE_GAME_POKER_PLAY implements ServerEventList
 	}
 
 	/**
-	 * 通知观战者游戏结束
+	 * Notify spectators of game over
 	 *
-	 * @param room	房间
-	 * @param result	出牌信息
+	 * @param room	room
+	 * @param result	card playing information
 	 */
 	private void notifyWatcherGameOver(Room room, String  result) {
 		for (ClientSide watcher : room.getWatcherList()) {

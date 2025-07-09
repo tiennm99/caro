@@ -43,7 +43,7 @@ public class Room {
 
 	private int firstSellClient;
 
-	/** 观战者列表 */
+	/** List of spectators */
 	private List<ClientSide> watcherList = new ArrayList<>(5);
 
 	private int scoreRate = 1;

@@ -18,16 +18,16 @@ public class I18nHelper {
     private static volatile boolean enabled = false;
 
     /**
-     * 启用并加载国际化信息，语言地区使用系统默认
+     * Enable and load internationalization information, using system default language and region
      */
     public static void enable() {
         enable(Locale.getDefault());
     }
 
     /**
-     * 启用并加载国际化，指定语言地区
+     * Enable and load internationalization with specified language and region
      *
-     * @param locale 语言地区
+     * @param locale language and region
      */
     public static void enable(Locale locale) {
         if (enabled) {
@@ -48,9 +48,9 @@ public class I18nHelper {
     }
 
     /**
-     * 更新并重新加载国际化资源
+     * Update and reload internationalization resources
      *
-     * @param locale 语言地区
+     * @param locale language and region
      */
     public static void refresh(Locale locale) {
         if (!enabled) {
@@ -72,12 +72,12 @@ public class I18nHelper {
     }
 
     /**
-     * 翻译文本
-     * <p>支持格式化，格式化方式采用String.format(format, Object...args)<p/>
-     * <p>不在字典内的key将原样显示</p>
+     * Translate text
+     * <p>Supports formatting, using String.format(format, Object...args)<p/>
+     * <p>Keys not in the dictionary will be displayed as-is</p>
      *
-     * @param key  待翻译语言key
-     * @param args 参数
+     * @param key  language key to be translated
+     * @param args parameters
      */
     public static String translate(String key, Object... args) {
         if (!enabled) {
@@ -92,7 +92,7 @@ public class I18nHelper {
     }
 
     /**
-     * 获取当前地区语言
+     * Get current language and region
      */
     public static Locale getCurrentLocale() {
         return messageBundle == null ? null : messageBundle.getLocale();

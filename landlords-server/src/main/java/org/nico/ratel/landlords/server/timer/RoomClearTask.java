@@ -88,12 +88,12 @@ public class RoomClearTask extends TimerTask {
 				ServerEventListener.get(ServerEventCode.CODE_CLIENT_EXIT).call(currentPlayer, null);
 				continue;
 			}
-            //kick this client
+            // Kick this client
             ChannelUtils.pushToClient(currentPlayer.getChannel(), ClientEventCode.CODE_CLIENT_KICK, null);
 
 			notifyWatcherClientKick(room, currentPlayer);
 
-            //client current player
+            // Remove current player
             room.getClientSideMap().remove(currentPlayer.getId());
             room.getClientSideList().remove(currentPlayer);
 
@@ -112,17 +112,17 @@ public class RoomClearTask extends TimerTask {
             room.getClientSideList().add(robot);
             room.setCurrentSellClient(robot.getId());
 
-            //If last sell client is current client, replace it to robot id
+            // If last sell client is current client, replace it to robot id
             if (room.getLastSellClient() == currentPlayer.getId()) {
                 room.setLastSellClient(robot.getId());
             }
 
-            //set robot difficulty -> simple
+            // Set robot difficulty -> simple
             room.setDifficultyCoefficient(1);
 
             ServerContains.CLIENT_SIDE_MAP.put(robot.getId(), robot);
 
-            //init client
+            // Initialize client
             currentPlayer.init();
 
             SimplePrinter.serverLog("room " + room.getId() + " player " + currentPlayer.getNickname() + " " + startingStatusInterval + "ms not operating, automatic custody!");
@@ -132,10 +132,10 @@ public class RoomClearTask extends TimerTask {
 	}
 
 	/**
-	 * 通知观战者玩家被提出房间
+	 * Notify spectators that a player has been kicked from the room
 	 *
-	 * @param room	房间
-	 * @param player	被提出的玩家
+	 * @param room	room
+	 * @param player	player who was kicked
 	 */
 	private void notifyWatcherClientKick(Room room, ClientSide player) {
 		for (ClientSide watcher : room.getWatcherList()) {

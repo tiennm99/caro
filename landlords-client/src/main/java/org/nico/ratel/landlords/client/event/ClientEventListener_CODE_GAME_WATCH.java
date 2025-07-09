@@ -18,7 +18,7 @@ public class ClientEventListener_CODE_GAME_WATCH extends ClientEventListener {
 
     @Override
     public void call(Channel channel, String wrapData) {
-        // 退出观战模式后不处理观战请求
+        // Do not process spectating requests after exiting spectating mode
         if (!User.INSTANCE.isWatching()) {
             return;
         }
@@ -32,47 +32,47 @@ public class ClientEventListener_CODE_GAME_WATCH extends ClientEventListener {
                 printJoinPlayerInfo(rawData);
                 break;
 
-            // 游戏开始
+            // Game start
             case CODE_GAME_STARTING:
                 printGameStartInfo(rawData);
                 break;
 
-            // 抢地主
+            // Landlord selection
             case CODE_GAME_LANDLORD_ELECT:
                 printRobLandlord(rawData);
                 break;
 
-            // 地主确认
+            // Landlord confirmation
             case CODE_GAME_LANDLORD_CONFIRM:
                 printConfirmLandlord(rawData);
                 break;
 
-            // 出牌
+            // Play cards
             case CODE_SHOW_POKERS:
                 printPlayPokers(rawData);
                 break;
 
-            // 不出（过）
+            // Pass (no play)
             case CODE_GAME_POKER_PLAY_PASS:
                 printPlayPass(rawData);
                 break;
 
-            // 玩家退出（此时可以退出观战，修改User.isWatching状态）
+            // Player exit (at this time can exit spectating, modify User.isWatching status)
             case CODE_CLIENT_EXIT:
                 printPlayerExit(rawData, channel);
                 break;
 
-            // 玩家被提出房间
+            // Player kicked from room
             case CODE_CLIENT_KICK:
                 printKickInfo(rawData);
                 break;
 
-            // 游戏结束（此时可以退出观战，修改User.isWatching状态）
+            // Game over (at this time can exit spectating, modify User.isWatching status)
             case CODE_GAME_OVER:
                 printGameResult(rawData, channel);
                 break;
 
-            // 其他事件忽略
+            // Ignore other events
             default:
                 break;
         }
@@ -124,10 +124,10 @@ public class ClientEventListener_CODE_GAME_WATCH extends ClientEventListener {
         SimplePrinter.printNotice("");
         SimplePrinter.printNotice("");
 
-        // 修改玩家是否观战状态
+        // Modify player spectating status
         User.INSTANCE.setWatching(false);
 
-        // 退出watch展示
+        // Exit watch display
         get(ClientEventCode.CODE_SHOW_OPTIONS).call(channel, "");
     }
 

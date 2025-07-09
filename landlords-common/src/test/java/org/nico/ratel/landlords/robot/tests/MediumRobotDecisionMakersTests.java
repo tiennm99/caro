@@ -54,7 +54,7 @@ public class MediumRobotDecisionMakersTests {
 		PokerSell lastSell = PokerHelper.checkPokerType(buildPokers(new Object[] {5,5}));
 		PokerSell sell = mediumRobot.howToPlayPokers(lastSell, self);
 		if(sell == null) {
-			System.out.println("打不起");
+			System.out.println("Cannot play");
 		}else {
 			System.out.println(PokerHelper.printPoker(sell.getSellPokers()));
 		}
