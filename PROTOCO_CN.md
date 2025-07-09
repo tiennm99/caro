@@ -1,23 +1,23 @@
 [toc]
-# Ratel-Client Development Documentation
+# Gomoku-Client Development Documentation
 ## Introduction
-### What is Ratel
-[Ratel](https://github.com/ainilili/ratel) is a project that allows you to play Landlords (Dou Di Zhu) in the command line. You can use a compact jar package to play games in terminals with JVM environment, supporting both player vs player and player vs AI modes to enrich your leisure time!
+### What is Gomoku Game
+This is a project that allows you to play Gomoku (Five-in-a-Row) in the command line. You can use a compact jar package to play games in terminals with JVM environment, supporting both player vs player and player vs AI modes to enrich your leisure time!
 
-Ratel is developed using Java language, with [Netty 4.x](https://github.com/netty/netty) network framework combined with [protobuf](https://github.com/protocolbuffers/protobuf) data protocol, supporting multiple clients playing simultaneously.
+The game is developed using Java language, with [Netty 4.x](https://github.com/netty/netty) network framework combined with [protobuf](https://github.com/protocolbuffers/protobuf) data protocol, supporting multiple clients playing simultaneously.
 
-### Ratel-Client Extension
-Ratel is designed with reactive architecture, communicating through event codes. For Ratel-Client, it supports cross-platform extension. In other words, any backend language can develop Ratel-Client!
+### Gomoku-Client Extension
+The game is designed with reactive architecture, communicating through event codes. For Gomoku-Client, it supports cross-platform extension. In other words, any backend language can develop Gomoku-Client!
 
-Before developing Ratel-Client, you should know:
-- Ratel Server-Client interaction network protocol is ``TCP/IP``.
-- Ratel Server-Client interaction data protocol is [protobuf](https://github.com/protocolbuffers/protobuf).
-- Ratel is event-driven, connecting various components in the Client.
-- All text content in Ratel is displayed by the Client.
+Before developing Gomoku-Client, you should know:
+- Gomoku Server-Client interaction network protocol is ``TCP/IP``.
+- Gomoku Server-Client interaction data protocol is [protobuf](https://github.com/protocolbuffers/protobuf).
+- Gomoku is event-driven, connecting various components in the Client.
+- All text content in Gomoku is displayed by the Client.
 
 ## Integration
 ### Architect Your Client
-We can rewrite the Ratel client using any backend language. The default Ratel client is written in Java. If you want to rewrite it in other languages, here's a recommended architecture:
+We can rewrite the Gomoku client using any backend language. The default Gomoku client is written in Java. If you want to rewrite it in other languages, here's a recommended architecture:
 ![](https://user-gold-cdn.xitu.io/2018/11/17/16720fa649dfaea0?w=898&h=500&f=png&s=33655)
 
 This architecture is very friendly for event handling. You can design an abstract ``Event-Listener`` interface, then develop different implementations to handle response data for different ``CODE`` values. For example, a simple example - Poker display, here's the pseudo code for our processing flow:

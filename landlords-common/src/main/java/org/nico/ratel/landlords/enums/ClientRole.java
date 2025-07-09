@@ -4,6 +4,10 @@ public enum ClientRole {
 
 	PLAYER,
 
-	ROBOT
+	ROBOT,
+
+	BLACK_PLAYER,
+
+	WHITE_PLAYER
 
 }

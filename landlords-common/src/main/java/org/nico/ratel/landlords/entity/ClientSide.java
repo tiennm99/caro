@@ -22,8 +22,6 @@ public class ClientSide {
 
 	private String nickname;
 
-	private List<Poker> pokers;
-
 	private ClientStatus status;
 
 	private ClientRole role;
@@ -48,7 +46,6 @@ public class ClientSide {
 
 	public void init() {
 		roomId = 0;
-		pokers = null;
 		status = ClientStatus.TO_CHOOSE;
 		type = null;
 		next = null;
@@ -100,13 +97,6 @@ public class ClientSide {
 		this.roomId = roomId;
 	}
 
-	public final List<Poker> getPokers() {
-		return pokers;
-	}
-
-	public final void setPokers(List<Poker> pokers) {
-		this.pokers = pokers;
-	}
 
 	public final int getScore() {
 		return score;

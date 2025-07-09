@@ -22,7 +22,7 @@ public enum ClientEventCode implements Serializable {
 
 	CODE_SHOW_ROOMS("Show room list"),
 
-	CODE_SHOW_POKERS("Show poker"),
+	CODE_SHOW_BOARD("Show game board"),
 
 	CODE_ROOM_CREATE_SUCCESS("Room created successfully"),
 
@@ -32,33 +32,27 @@ public enum ClientEventCode implements Serializable {
 
 	CODE_ROOM_JOIN_FAIL_BY_INEXIST("Join - room does not exist"),
 
-	CODE_ROOM_PLAY_FAIL_BY_INEXIST1("Play card - room does not exist"),
+	CODE_ROOM_PLAY_FAIL_BY_INEXIST("Make move - room does not exist"),
 
 	CODE_GAME_STARTING("Start game"),
 
-	CODE_GAME_LANDLORD_ELECT("Elect landlord"),
+	CODE_GAME_MOVE_SUCCESS("Move successful"),
 
-	CODE_GAME_LANDLORD_CONFIRM("Landlord confirmed"),
+	CODE_GAME_MOVE_INVALID("Invalid move"),
 
-	CODE_GAME_LANDLORD_CYCLE("Landlord election round ended"),
+	CODE_GAME_MOVE_OCCUPIED("Position occupied"),
 
-	CODE_GAME_POKER_PLAY("Poker play turn"),
+	CODE_GAME_MOVE_OUT_OF_BOUNDS("Move out of bounds"),
 
-	CODE_GAME_POKER_PLAY_REDIRECT("Poker play redirect"),
-
-	CODE_GAME_POKER_PLAY_MISMATCH("Poker play mismatch"),
-
-	CODE_GAME_POKER_PLAY_LESS("Poker play too small"),
-
-	CODE_GAME_POKER_PLAY_PASS("Pass"),
-
-	CODE_GAME_POKER_PLAY_CANT_PASS("Cannot pass"),
-
-	CODE_GAME_POKER_PLAY_INVALID("Invalid"),
-
-	CODE_GAME_POKER_PLAY_ORDER_ERROR("Order error"),
+	CODE_GAME_MOVE_NOT_YOUR_TURN("Not your turn"),
 
 	CODE_GAME_OVER("Game over"),
+
+	CODE_GAME_WIN("You win"),
+
+	CODE_GAME_LOSE("You lose"),
+
+	CODE_GAME_DRAW("Draw"),
 
 	CODE_PVE_DIFFICULTY_NOT_SUPPORT("AI difficulty not supported"),
 

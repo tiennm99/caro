@@ -8,10 +8,10 @@
 ![Build ratel(Java with Maven)](https://github.com/ainilili/ratel/workflows/Build%20ratel(Java%20with%20Maven)/badge.svg?branch=master)
 ![Docker Image Version (latest by date)](https://img.shields.io/docker/v/kebyn/ratel?label=Docker&logo=docker&style=flat-square)
 
-# This project is no longer maintained, please try the [👉 new version](https://github.com/ratel-online/server), which supports joker mode, Texas Hold'em, adds timeout mechanism, and perfectly recreates Happy Landlords, [online experience](http://ratel.isnico.com/)
+# Gomoku Game Server-Client
 
 ## Introduction
-Command-line Landlords game based on Netty, born for procrastination and leisure~
+Command-line Gomoku (Five-in-a-Row) game based on Netty, converted from the original Landlords game~
 
 ## Installation
 First download and package, ensure maven and JRE environment are installed locally:
@@ -31,37 +31,39 @@ java -jar landlords-client/target/landlords-client-#{version}.jar
 ```
 **Note**, please replace ``#{version}`` with the current running version in actual execution!
 ## Gameplay Introduction
-Online trial: [Portal](http://ratel.isnico.com)
+Play Gomoku (Five-in-a-Row) on a 15x15 board!
 
 ![demo](demo.gif)
 
-### Card Playing Rules
-All card types:
+### Game Rules
+- Two players take turns placing black and white pieces on a 15x15 board
+- The first player uses black pieces, the second player uses white pieces
+- The goal is to be the first to form an unbroken line of five pieces horizontally, vertically, or diagonally
+- The game ends when one player achieves five in a row or the board is full (draw)
+
+### Game Commands
 ```
-┌──┐──┐──┐──┐──┐──┐──┐──┐──┐──┐──┐──┐──┐──┐──┐
-│3 |4 |5 |6 |7 |8 |9 |10|J |Q |K |A |2 |S |X |
-│♦ |♦ |♦ |♦ |♦ |♦ |♦ |♦ |♦ |♦ |♦ |♦ |♦ |  |  |
-└──┘──┘──┘──┘──┘──┘──┘──┘──┘──┘──┘──┘──┘──┘──┘
+Board positions are specified as: row,col (e.g., 7,7 for center)
 ```
 Examples:
- - King bomb: ``sx``
- - Straight: ``34567``
- - Three with one: ``3334``
- - Airplane: ``333444a2``
- - Single 10: ``0`` or ``t``
- - Single A: ``a`` or ``1``
- - Max straight: ``34567890jqka``
- - Don't want to play: ``pass`` or ``p``
+ - Make a move: ``7,7`` (place piece at row 7, column 7)
+ - Show board: ``board`` or ``b``
+ - Show move history: ``history`` or ``h``
+ - Pass turn: ``pass`` or ``p``
  - Exit: ``exit`` or ``e``
- - [More](https://zh.wikipedia.org/zh-sg/%E9%AC%A5%E5%9C%B0%E4%B8%BB)
+ - Reset game: ``reset`` or ``r`` (room owner only)
 
 #### Protocol Support
  - TCP
  - Websocket
 
 Websocket protocol address is ``ws://host:port/ratel``, Websocket port needs to be original port plus 1 (if tcp port is 1024, then ws port should be 1025)
-## Procrastination Club
-QQ Group ``948365095``, procrastination feels great for a moment, keep procrastinating always feels great!
+## Game Features
+- Support for Player vs Player (PVP) mode
+- Support for Player vs AI (PVE) mode  
+- Real-time spectator mode
+- Move history tracking
+- Automatic win detection
 
 ## Ecosystem
  - [go-ratel-client](https://github.com/ZuoFuhong/go-ratel)
@@ -76,7 +78,10 @@ QQ Group ``948365095``, procrastination feels great for a moment, keep procrasti
  - [Changelog](https://github.com/ainilili/ratel/blob/master/UPDATE.md)
 
 ## Plans
- - Support for advanced difficulty robots
+ - Support for advanced difficulty AI
+ - Tournament mode support
+ - Ranking system
+ - Replay system
 
 ## More
  - [Serverlist.json](https://github.com/ainilili/ratel/blob/master/serverlist.json) is the current server list. If your server is deployed with the current latest version of the server and shared with everyone, you can submit it to us through PR!

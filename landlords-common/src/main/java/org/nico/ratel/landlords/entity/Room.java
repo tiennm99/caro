@@ -10,6 +10,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import org.nico.noson.annotations.JsonIgnore;
 import org.nico.ratel.landlords.enums.RoomStatus;
 import org.nico.ratel.landlords.enums.RoomType;
+import org.nico.ratel.landlords.enums.PieceType;
 
 public class Room {
 
@@ -25,15 +26,15 @@ public class Room {
 
 	private LinkedList<ClientSide> clientSideList;
 
-	private int landlordId = -1;
+	private Board gameBoard;
 
-	private List<Poker> landlordPokers;
+	private int currentPlayer = -1;
 
-	private PokerSell lastPokerShell;
+	private int blackPlayerId = -1;
 
-	private int lastSellClient = -1;
+	private int whitePlayerId = -1;
 
-	private int currentSellClient = -1;
+	private PieceType currentTurn = PieceType.BLACK;
 
 	private int difficultyCoefficient;
 
@@ -41,7 +42,7 @@ public class Room {
 
 	private long createTime;
 
-	private int firstSellClient;
+	private List<GameMove> moveHistory;
 
 	/** List of spectators */
 	private List<ClientSide> watcherList = new ArrayList<>(5);
@@ -59,6 +60,9 @@ public class Room {
 		this.clientSideList = new LinkedList<>();
 		this.status = RoomStatus.WAIT;
 		this.createTime = System.currentTimeMillis();
+		this.gameBoard = new Board();
+		this.moveHistory = new ArrayList<>();
+		this.currentTurn = PieceType.BLACK;
 	}
 
 	public int getScore() {
@@ -113,20 +117,20 @@ public class Room {
 		this.type = type;
 	}
 
-	public final PokerSell getLastPokerShell() {
-		return lastPokerShell;
+	public final Board getGameBoard() {
+		return gameBoard;
 	}
 
-	public final void setLastPokerShell(PokerSell lastPokerShell) {
-		this.lastPokerShell = lastPokerShell;
+	public final void setGameBoard(Board gameBoard) {
+		this.gameBoard = gameBoard;
 	}
 
-	public final int getCurrentSellClient() {
-		return currentSellClient;
+	public final int getCurrentPlayer() {
+		return currentPlayer;
 	}
 
-	public final void setCurrentSellClient(int currentSellClient) {
-		this.currentSellClient = currentSellClient;
+	public final void setCurrentPlayer(int currentPlayer) {
+		this.currentPlayer = currentPlayer;
 	}
 
 	public long getLastFlushTime() {
@@ -137,20 +141,32 @@ public class Room {
 		this.lastFlushTime = lastFlushTime;
 	}
 
-	public int getLastSellClient() {
-		return lastSellClient;
+	public int getBlackPlayerId() {
+		return blackPlayerId;
 	}
 
-	public void setLastSellClient(int lastSellClient) {
-		this.lastSellClient = lastSellClient;
+	public void setBlackPlayerId(int blackPlayerId) {
+		this.blackPlayerId = blackPlayerId;
 	}
 
-	public int getLandlordId() {
-		return landlordId;
+	public int getWhitePlayerId() {
+		return whitePlayerId;
 	}
 
-	public void setLandlordId(int landlordId) {
-		this.landlordId = landlordId;
+	public void setWhitePlayerId(int whitePlayerId) {
+		this.whitePlayerId = whitePlayerId;
+	}
+
+	public PieceType getCurrentTurn() {
+		return currentTurn;
+	}
+
+	public void setCurrentTurn(PieceType currentTurn) {
+		this.currentTurn = currentTurn;
+	}
+
+	public void switchTurn() {
+		this.currentTurn = (this.currentTurn == PieceType.BLACK) ? PieceType.WHITE : PieceType.BLACK;
 	}
 
 	public LinkedList<ClientSide> getClientSideList() {
@@ -161,12 +177,22 @@ public class Room {
 		this.clientSideList = clientSideList;
 	}
 
-	public List<Poker> getLandlordPokers() {
-		return landlordPokers;
+	public List<GameMove> getMoveHistory() {
+		return moveHistory;
 	}
 
-	public void setLandlordPokers(List<Poker> landlordPokers) {
-		this.landlordPokers = landlordPokers;
+	public void setMoveHistory(List<GameMove> moveHistory) {
+		this.moveHistory = moveHistory;
+	}
+
+	public void addMove(GameMove move) {
+		this.moveHistory.add(move);
+	}
+
+	public void resetGame() {
+		this.gameBoard.reset();
+		this.moveHistory.clear();
+		this.currentTurn = PieceType.BLACK;
 	}
 
 	public final String getRoomOwner() {
@@ -201,12 +227,18 @@ public class Room {
 		this.clientSideMap = clientSideMap;
 	}
 
-	public int getFirstSellClient() {
-		return firstSellClient;
+	public boolean isPlayerTurn(int playerId) {
+		return (currentTurn == PieceType.BLACK && playerId == blackPlayerId) ||
+			   (currentTurn == PieceType.WHITE && playerId == whitePlayerId);
 	}
 
-	public void setFirstSellClient(int firstSellClient) {
-		this.firstSellClient = firstSellClient;
+	public PieceType getPlayerPiece(int playerId) {
+		if (playerId == blackPlayerId) {
+			return PieceType.BLACK;
+		} else if (playerId == whitePlayerId) {
+			return PieceType.WHITE;
+		}
+		return PieceType.EMPTY;
 	}
 
 	public List<ClientSide> getWatcherList() {

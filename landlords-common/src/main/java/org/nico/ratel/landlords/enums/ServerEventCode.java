@@ -12,7 +12,7 @@ public enum ServerEventCode implements Serializable {
 
 	CODE_CLIENT_NICKNAME_SET("Set nickname"),
 
-	CODE_CLIENT_HEAD_BEAT("Pass"),
+	CODE_CLIENT_HEAD_BEAT("Heartbeat"),
 
 	CODE_ROOM_CREATE("Create PVP room"),
 
@@ -26,13 +26,9 @@ public enum ServerEventCode implements Serializable {
 
 	CODE_GAME_READY("Player ready"),
 
-	CODE_GAME_LANDLORD_ELECT("Elect landlord"),
+	CODE_GAME_MOVE("Make move"),
 
-	CODE_GAME_POKER_PLAY("Poker play phase"),
-
-	CODE_GAME_POKER_PLAY_REDIRECT("Poker play redirect"),
-
-	CODE_GAME_POKER_PLAY_PASS("Pass"),
+	CODE_GAME_RESET("Reset game"),
 
 	CODE_GAME_WATCH("Spectate"),
 
