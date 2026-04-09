@@ -17,7 +17,7 @@ import io.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepender;
 import io.netty.handler.timeout.IdleStateHandler;
 import org.nico.ratel.landlords.entity.ServerTransferData;
 import org.nico.ratel.landlords.print.SimplePrinter;
-import org.nico.ratel.landlords.robot.RobotDecisionMakers;
+
 import org.nico.ratel.landlords.server.ServerContains;
 import org.nico.ratel.landlords.server.handler.SecondProtobufCodec;
 import org.nico.ratel.landlords.server.handler.ProtobufTransferHandler;
@@ -54,9 +54,6 @@ public class ProtobufProxy implements Proxy{
             ChannelFuture f = bootstrap .bind().sync();
 
             SimplePrinter.serverLog("The protobuf server was successfully started on port " + port);
-            //Init robot.
-            RobotDecisionMakers.init();
-
             ServerContains.THREAD_EXCUTER.execute(() -> {
                 Timer timer=new Timer();
                 timer.schedule(new RoomClearTask(), 0L, 3000L);

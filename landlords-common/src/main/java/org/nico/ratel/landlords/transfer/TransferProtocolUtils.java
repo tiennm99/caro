@@ -23,9 +23,9 @@ public class TransferProtocolUtils {
 	public static final byte PROTOCOL_TAIL = "$".getBytes()[0];
 
 	/**
-	 * Serialize the poker list to transportable bytes
+	 * Serialize the object to transportable bytes
 	 *
-	 * @param obj Poker list
+	 * @param obj Object to serialize
 	 * @return Transportable byte array
 	 */
 	public static byte[] serialize(Object obj) {

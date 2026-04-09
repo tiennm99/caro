@@ -5,9 +5,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentSkipListMap;
-import java.util.concurrent.locks.ReentrantLock;
 
-import org.nico.noson.annotations.JsonIgnore;
 import org.nico.ratel.landlords.enums.RoomStatus;
 import org.nico.ratel.landlords.enums.RoomType;
 import org.nico.ratel.landlords.enums.PieceType;
@@ -27,8 +25,6 @@ public class Room {
 	private LinkedList<ClientSide> clientSideList;
 
 	private Board gameBoard;
-
-	private int currentPlayer = -1;
 
 	private int blackPlayerId = -1;
 
@@ -91,14 +87,6 @@ public class Room {
 
 	public final void setGameBoard(Board gameBoard) {
 		this.gameBoard = gameBoard;
-	}
-
-	public final int getCurrentPlayer() {
-		return currentPlayer;
-	}
-
-	public final void setCurrentPlayer(int currentPlayer) {
-		this.currentPlayer = currentPlayer;
 	}
 
 	public long getLastFlushTime() {
