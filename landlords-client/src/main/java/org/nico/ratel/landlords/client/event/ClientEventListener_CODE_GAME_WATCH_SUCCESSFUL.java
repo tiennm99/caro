@@ -25,17 +25,13 @@ public class ClientEventListener_CODE_GAME_WATCH_SUCCESSFUL extends ClientEventL
 
     @Override
     public void call(Channel channel, String data) {
-        // 修改User.isWatching状态
-        // Edit User.isWatching
+        // Set watching state
         User.INSTANCE.setWatching(true);
 
-        // 进入观战提示
-        // Enter spectator mode 
         Map<String, Object> map = MapHelper.parser(data);
         SimplePrinter.printNotice(String.format(WATCH_SUCCESSFUL_TIPS, map.get("owner"), map.get("status")));
 
-        // 监听输入用于退出
-        // Listen enter event to exit spectator mode
+        // Listen for exit command
         new Thread(() -> registerExitEvent(channel), "exit-spectator-input-thread").start();
     }
 
@@ -57,10 +53,7 @@ public class ClientEventListener_CODE_GAME_WATCH_SUCCESSFUL extends ClientEventL
         SimplePrinter.printNotice("");
         SimplePrinter.printNotice("");
 
-        // 修改玩家是否观战状态
         User.INSTANCE.setWatching(false);
-
-        // 退出观战模式
         pushToServer(channel, ServerEventCode.CODE_GAME_WATCH_EXIT);
         get(ClientEventCode.CODE_SHOW_OPTIONS).call(channel, "");
     }
