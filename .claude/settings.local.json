@@ -9,7 +9,9 @@
       "Bash(git rm:*)",
       "Bash(mvn compile:*)",
       "Bash(where mvn:*)",
-      "Bash(where mvn.cmd)"
+      "Bash(where mvn.cmd)",
+      "Bash(mvn clean:*)",
+      "Bash(mvn test:*)"
     ],
     "deny": []
   }

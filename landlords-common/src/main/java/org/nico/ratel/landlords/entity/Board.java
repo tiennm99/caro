@@ -52,31 +52,12 @@ public class Board {
 	}
 
 	private boolean checkWin(int row, int col, PieceType piece) {
-		// Check horizontal
-		if (checkDirection(row, col, 0, 1, piece) || 
-			checkDirection(row, col, 0, -1, piece)) {
-			return true;
-		}
-		
-		// Check vertical
-		if (checkDirection(row, col, 1, 0, piece) || 
-			checkDirection(row, col, -1, 0, piece)) {
-			return true;
-		}
-		
-		// Check diagonal (top-left to bottom-right)
-		if (checkDirection(row, col, 1, 1, piece) || 
-			checkDirection(row, col, -1, -1, piece)) {
-			return true;
-		}
-		
-		// Check diagonal (top-right to bottom-left)
-		if (checkDirection(row, col, 1, -1, piece) || 
-			checkDirection(row, col, -1, 1, piece)) {
-			return true;
-		}
-		
-		return false;
+		// Check 4 axes: horizontal, vertical, and both diagonals
+		// Each checkDirection already scans both directions along the axis
+		return checkDirection(row, col, 0, 1, piece)   // horizontal
+			|| checkDirection(row, col, 1, 0, piece)    // vertical
+			|| checkDirection(row, col, 1, 1, piece)    // diagonal (\)
+			|| checkDirection(row, col, 1, -1, piece);  // anti-diagonal (/)
 	}
 
 	private boolean checkDirection(int row, int col, int deltaRow, int deltaCol, PieceType piece) {
