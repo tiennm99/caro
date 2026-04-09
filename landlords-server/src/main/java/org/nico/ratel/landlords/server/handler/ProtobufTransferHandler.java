@@ -34,7 +34,7 @@ public class ProtobufTransferHandler extends ChannelInboundHandlerAdapter {
 		//init client info
 		ClientSide clientSide = new ClientSide(getId(ctx.channel()), ClientStatus.TO_CHOOSE, ch);
 		clientSide.setNickname(String.valueOf(clientSide.getId()));
-		clientSide.setRole(ClientRole.PLAYER);
+		clientSide.setRole(ClientRole.BLACK_PLAYER);
 
 		ServerContains.CLIENT_SIDE_MAP.put(clientSide.getId(), clientSide);
 		SimplePrinter.serverLog("Has client connect to the server: " + clientSide.getId());

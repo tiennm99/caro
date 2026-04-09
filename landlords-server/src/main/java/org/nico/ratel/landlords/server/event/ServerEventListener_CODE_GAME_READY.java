@@ -3,49 +3,45 @@ package org.nico.ratel.landlords.server.event;
 import org.nico.ratel.landlords.channel.ChannelUtils;
 import org.nico.ratel.landlords.entity.ClientSide;
 import org.nico.ratel.landlords.entity.Room;
-import org.nico.ratel.landlords.enums.*;
+import org.nico.ratel.landlords.enums.ClientEventCode;
+import org.nico.ratel.landlords.enums.ClientStatus;
+import org.nico.ratel.landlords.enums.RoomStatus;
+import org.nico.ratel.landlords.enums.ServerEventCode;
 import org.nico.ratel.landlords.helper.MapHelper;
-import org.nico.ratel.landlords.print.SimplePrinter;
 import org.nico.ratel.landlords.server.ServerContains;
 
-import java.util.concurrent.ConcurrentSkipListMap;
-
 public class ServerEventListener_CODE_GAME_READY implements ServerEventListener {
+
 	@Override
 	public void call(ClientSide clientSide, String data) {
 		Room room = ServerContains.getRoom(clientSide.getRoomId());
-		if (room == null) {
+		if (room == null || room.getStatus() == RoomStatus.STARTING) {
 			return;
 		}
-		SimplePrinter.serverLog("房间状态：" + room.getStatus());
-		SimplePrinter.serverLog("玩家状态：" + clientSide.getStatus());
-		if (room.getStatus() == RoomStatus.STARTING) {
+		if (clientSide.getStatus() == ClientStatus.PLAYING) {
 			return;
 		}
-		if (clientSide.getStatus() == ClientStatus.PLAYING || clientSide.getStatus() == ClientStatus.TO_CHOOSE || clientSide.getStatus() == ClientStatus.CALL_LANDLORD) {
-			return;
-		}
+
+		// Toggle ready state
 		clientSide.setStatus(clientSide.getStatus() == ClientStatus.READY ? ClientStatus.NO_READY : ClientStatus.READY);
+
 		String result = MapHelper.newInstance()
 				.put("clientNickName", clientSide.getNickname())
 				.put("status", clientSide.getStatus())
 				.put("clientId", clientSide.getId())
 				.json();
-		boolean allReady = true;
-		ConcurrentSkipListMap<Integer, ClientSide> roomClientMap = (ConcurrentSkipListMap<Integer, ClientSide>) room.getClientSideMap();
-		if (roomClientMap.size() < 3) {
-			allReady = false;
-		} else {
-			for (ClientSide client : room.getClientSideList()) {
-				if (client.getRole() == ClientRole.PLAYER && client.getStatus() != ClientStatus.READY) {
-					allReady = false;
-					break;
-				}
+
+		// Check if all human players are ready (need 2 players)
+		boolean allReady = room.getClientSideMap().size() >= 2;
+		for (ClientSide client : room.getClientSideList()) {
+			if (client.getChannel() != null && client.getStatus() != ClientStatus.READY) {
+				allReady = false;
 			}
 		}
 
+		// Notify all human players
 		for (ClientSide client : room.getClientSideList()) {
-			if (client.getRole() == ClientRole.PLAYER) {
+			if (client.getChannel() != null) {
 				ChannelUtils.pushToClient(client.getChannel(), ClientEventCode.CODE_GAME_READY, result);
 			}
 		}

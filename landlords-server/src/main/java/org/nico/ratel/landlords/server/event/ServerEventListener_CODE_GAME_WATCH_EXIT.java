@@ -12,7 +12,7 @@ public class ServerEventListener_CODE_GAME_WATCH_EXIT implements ServerEventList
         Room room = ServerContains.getRoom(clientSide.getRoomId());
 
         if (room != null) {
-            // 房间如果存在，则将观战者从房间观战列表中移除
+            // Remove spectator from room's watcher list if room exists
             clientSide.setRoomId(room.getId());
             boolean successful = room.getWatcherList().remove(clientSide);
             if (successful) {

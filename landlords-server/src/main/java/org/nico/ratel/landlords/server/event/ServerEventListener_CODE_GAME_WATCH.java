@@ -24,7 +24,7 @@ public class ServerEventListener_CODE_GAME_WATCH implements ServerEventListener 
 
             ChannelUtils.pushToClient(clientSide.getChannel(), ClientEventCode.CODE_ROOM_JOIN_FAIL_BY_INEXIST, result);
         } else {
-            // 将用户加入到房间中的观战者列表中
+            // Add user to the room's spectator list
             clientSide.setRoomId(room.getId());
             room.getWatcherList().add(clientSide);
 
