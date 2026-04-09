@@ -47,10 +47,6 @@ public class Room {
 	/** List of spectators */
 	private List<ClientSide> watcherList = new ArrayList<>(5);
 
-	private int scoreRate = 1;
-
-	private int baseScore = 3;
-
 	public Room() {
 	}
 
@@ -63,34 +59,6 @@ public class Room {
 		this.gameBoard = new Board();
 		this.moveHistory = new ArrayList<>();
 		this.currentTurn = PieceType.BLACK;
-	}
-
-	public int getScore() {
-		return this.baseScore * this.scoreRate;
-	}
-
-	public int getBaseScore() {
-		return this.baseScore;
-	}
-
-	public void setBaseScore(int baseScore) {
-		this.baseScore = baseScore;
-	}
-
-	public int getScoreRate() {
-		return this.scoreRate;
-	}
-
-	public void setScoreRate(int scoreRate) {
-		this.scoreRate = scoreRate;
-	}
-
-	public void initScoreRate() {
-		this.scoreRate = 1;
-	}
-
-	public void increaseRate() {
-		this.scoreRate *= 2;
 	}
 
 	public final long getCreateTime() {

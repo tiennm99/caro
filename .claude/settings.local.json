@@ -5,7 +5,11 @@
       "Bash(grep:*)",
       "Bash(mv:*)",
       "Bash(ls:*)",
-      "Bash(java:*)"
+      "Bash(java:*)",
+      "Bash(git rm:*)",
+      "Bash(mvn compile:*)",
+      "Bash(where mvn:*)",
+      "Bash(where mvn.cmd)"
     ],
     "deny": []
   }

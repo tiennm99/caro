@@ -32,7 +32,6 @@ public class ClientEventListener_CODE_SHOW_OPTIONS_PVE extends ClientEventListen
 			call(channel, data);
 			return;
 		}
-		initLastSellInfo();
 		pushToServer(channel, ServerEventCode.CODE_ROOM_CREATE_PVE, String.valueOf(choose));
 	}
 }

@@ -10,9 +10,6 @@ public enum ClientStatus {
 
 	WAIT,
 
-	CALL_LANDLORD,
-
 	PLAYING
-
 
 }
