@@ -7,6 +7,7 @@ import { connectionService } from '../services/connection-service.js';
 import { eventBus } from '../services/event-bus.js';
 import { gameState } from '../services/game-state-service.js';
 import { ServerEventCode, ClientEventCode } from '../config/protocol-constants.js';
+import { showToast } from './game-ui.js';
 
 const overlay = () => document.getElementById('ui-overlay');
 
@@ -178,3 +179,14 @@ eventBus.on(ClientEventCode.ROOM_CREATE_SUCCESS, (data) => {
 });
 eventBus.on(ClientEventCode.CLIENT_EXIT, showLobby);
 eventBus.on(ClientEventCode.CLIENT_KICK, showLobby);
+
+// Server emits NICKNAME_SET as rejection when the submitted nickname fails
+// length validation (payload: { invalidLength: N }). Surface it as a toast
+// and clear the optimistically-stored local nickname so we don't drift.
+eventBus.on(ClientEventCode.NICKNAME_SET, (data) => {
+  if (data && typeof data === 'object' && 'invalidLength' in data) {
+    showToast(`Nickname must be 1–10 characters (got ${data.invalidLength})`, 'error');
+    gameState.nickname = '';
+    showNicknameScreen();
+  }
+});

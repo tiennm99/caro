@@ -24,9 +24,14 @@ export class BootScene extends Phaser.Scene {
     // Connect to server
     connectionService.connect();
 
-    // Transition to menu once server prompts for nickname
-    eventBus.on(ClientEventCode.NICKNAME_SET, () => {
+    // Transition to menu once server prompts for nickname. Server emits
+    // NICKNAME_SET both as the initial prompt AND on validation rejection,
+    // so unsubscribe after the first hit — otherwise later rejections would
+    // bounce the scene back to MenuScene (restart loop).
+    const onPrompt = () => {
+      eventBus.off(ClientEventCode.NICKNAME_SET, onPrompt);
       this.scene.start('MenuScene');
-    });
+    };
+    eventBus.on(ClientEventCode.NICKNAME_SET, onPrompt);
   }
 }
