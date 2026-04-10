@@ -15,7 +15,7 @@
 	<properties>
 		<maven.compiler.release>25</maven.compiler.release>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<main.class>org.nico.ratel.landlords.server.SimpleServer</main.class>
+		<main.class>com.miti99.caro.server.SimpleServer</main.class>
 
 		<netty.version>4.1.115.Final</netty.version>
 		<protobuf.version>3.25.5</protobuf.version>
