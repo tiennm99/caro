@@ -60,7 +60,7 @@ caro/
 │   ├── vite.config.js
 │   └── package.json                     caro-client 0.0.1-beta
 ├── docs/                                (this directory)
-│   ├── project-overview-pdr.md
+│   ├── project-overview.md
 │   ├── system-architecture.md
 │   ├── codebase-summary.md
 │   ├── code-standards.md
