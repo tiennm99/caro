@@ -271,7 +271,7 @@ WebSocketServerProtocolHandler ("/ratel")
 WebsocketTransferHandler       (decode Msg record via gson, dispatch event listener)
 ```
 
-No `StaticFileHandler` in the pipeline — the old built-in web UI was removed on 2026-04-10. Non-WS HTTP requests return Netty's default HTTP error.
+The pipeline has no static file handler. Non-WS HTTP requests to port 1025 return Netty's default HTTP error.
 
 ---
 

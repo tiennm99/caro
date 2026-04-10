@@ -64,8 +64,7 @@ caro/
 │   ├── system-architecture.md
 │   ├── codebase-summary.md
 │   ├── code-standards.md
-│   ├── deployment-guide.md
-│   └── project-roadmap.md
+│   └── deployment-guide.md
 ├── plans/                               Implementation plans
 ├── docker-compose.yml                   services: server, client
 ├── README.md
