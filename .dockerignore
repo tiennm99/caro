@@ -1,0 +1,13 @@
+**/target
+**/node_modules
+**/dist
+.git
+.github
+.claude
+.idea
+.vscode
+docs
+plans
+*.md
+demo.gif
+repomix-output.xml
