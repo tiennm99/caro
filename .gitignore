@@ -49,9 +49,9 @@ target
 /ratel-landlords/.project
 .vscode
 
-# Web client
+# Client
 node_modules
-web-client/dist
+client/dist
 
 # Repomix output
 repomix-output.xml

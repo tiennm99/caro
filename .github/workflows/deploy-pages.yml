@@ -1,10 +1,10 @@
-name: Deploy Web Client to GitHub Pages
+name: Deploy Client to GitHub Pages
 
 on:
   push:
     branches: [master]
     paths:
-      - 'web-client/**'
+      - 'client/**'
       - '.github/workflows/deploy-pages.yml'
 
 permissions:
@@ -22,19 +22,19 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: web-client
+        working-directory: client
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
-          cache-dependency-path: web-client/package-lock.json
+          cache-dependency-path: client/package-lock.json
       - run: npm ci
       - run: npm run build
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: web-client/dist
+          path: client/dist
 
   deploy:
     name: Deploy

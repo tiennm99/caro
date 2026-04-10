@@ -5,15 +5,15 @@ services:
       dockerfile: server/Dockerfile
     container_name: caro-server
     ports:
-      - "1024:1024"  # TCP / Protobuf (CLI client)
-      - "1025:1025"  # WebSocket + static HTTP (web client)
+      - "1024:1024"  # TCP / Protobuf
+      - "1025:1025"  # WebSocket
     restart: unless-stopped
 
-  web-client:
+  client:
     build:
-      context: ./web-client
+      context: ./client
       dockerfile: Dockerfile
-    container_name: caro-web-client
+    container_name: caro-client
     ports:
       - "8080:80"
     depends_on:

@@ -21,18 +21,18 @@ jobs:
           cache: maven
       - run: mvn -f server/pom.xml -B clean verify
 
-  build-web-client:
-    name: Build Web Client
+  build-client:
+    name: Build Client
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: web-client
+        working-directory: client
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
-          cache-dependency-path: web-client/package-lock.json
+          cache-dependency-path: client/package-lock.json
       - run: npm ci
       - run: npm run build
