@@ -3,7 +3,7 @@ package org.nico.ratel.landlords.helper;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-import org.nico.noson.Noson;
+import org.nico.ratel.landlords.utils.JsonUtils;
 
 public class MapHelper {
 
@@ -17,8 +17,9 @@ public class MapHelper {
 		return new MapHelper();
 	}
 
+	@SuppressWarnings("unchecked")
 	public static Map<String, Object> parser(String json) {
-		return Noson.convert(json, Map.class);
+		return JsonUtils.fromJson(json, Map.class);
 	}
 
 	public MapHelper put(String name, Object Object) {
@@ -27,7 +28,7 @@ public class MapHelper {
 	}
 
 	public String json() {
-		return Noson.reversal(data);
+		return JsonUtils.toJson(data);
 	}
 
 	public Map<String, Object> map() {

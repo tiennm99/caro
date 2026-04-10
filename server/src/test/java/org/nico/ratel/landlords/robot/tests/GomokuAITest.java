@@ -1,12 +1,12 @@
 package org.nico.ratel.landlords.robot.tests;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.nico.ratel.landlords.entity.Board;
 import org.nico.ratel.landlords.entity.GameMove;
 import org.nico.ratel.landlords.enums.PieceType;
 import org.nico.ratel.landlords.robot.GomokuAI;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class GomokuAITest {
 

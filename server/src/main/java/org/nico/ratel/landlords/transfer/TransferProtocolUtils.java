@@ -1,7 +1,7 @@
 package org.nico.ratel.landlords.transfer;
 
-import org.nico.noson.Noson;
 import org.nico.ratel.landlords.exception.LandlordException;
+import org.nico.ratel.landlords.utils.JsonUtils;
 
 /**
  * Protocol transport related tools
@@ -31,7 +31,7 @@ public class TransferProtocolUtils {
 	public static byte[] serialize(Object obj) {
 		ByteLink bl = new ByteLink();
 		bl.append(PROTOCOL_HAED);
-		bl.append(Noson.reversal(obj).getBytes());
+		bl.append(JsonUtils.toJson(obj).getBytes());
 		bl.append(PROTOCOL_TAIL);
 		return bl.toArray();
 	}
@@ -58,7 +58,7 @@ public class TransferProtocolUtils {
 		} else {
 			byte[] content = new byte[end - start];
 			System.arraycopy(bytes, start, content, 0, content.length);
-			return Noson.convert(new String(content), clazz);
+			return JsonUtils.fromJson(new String(content), clazz);
 		}
 	}
 

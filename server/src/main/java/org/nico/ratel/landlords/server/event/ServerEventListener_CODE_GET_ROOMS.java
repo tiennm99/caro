@@ -5,13 +5,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import org.nico.noson.Noson;
 import org.nico.ratel.landlords.channel.ChannelUtils;
 import org.nico.ratel.landlords.entity.ClientSide;
 import org.nico.ratel.landlords.entity.Room;
 import org.nico.ratel.landlords.enums.ClientEventCode;
 import org.nico.ratel.landlords.helper.MapHelper;
 import org.nico.ratel.landlords.server.ServerContains;
+import org.nico.ratel.landlords.utils.JsonUtils;
 
 public class ServerEventListener_CODE_GET_ROOMS implements ServerEventListener {
 
@@ -27,7 +27,7 @@ public class ServerEventListener_CODE_GET_ROOMS implements ServerEventListener {
 					.put("roomType", room.getType())
 					.map());
 		}
-		ChannelUtils.pushToClient(clientSide.getChannel(), ClientEventCode.CODE_SHOW_ROOMS, Noson.reversal(roomList));
+		ChannelUtils.pushToClient(clientSide.getChannel(), ClientEventCode.CODE_SHOW_ROOMS, JsonUtils.toJson(roomList));
 	}
 
 }

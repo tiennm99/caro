@@ -17,9 +17,9 @@ jobs:
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: 21
+          java-version: 25
           cache: maven
-      - run: mvn clean verify
+      - run: mvn -f server/pom.xml -B clean verify
 
   build-web-client:
     name: Build Web Client

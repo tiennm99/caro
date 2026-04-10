@@ -1,6 +1,6 @@
 package org.nico.ratel.landlords.helper.tests;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.nico.ratel.landlords.entity.Board;
 import org.nico.ratel.landlords.entity.Room;
 import org.nico.ratel.landlords.enums.PieceType;
@@ -9,7 +9,7 @@ import org.nico.ratel.landlords.helper.GomokuHelper;
 
 import java.util.List;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class GomokuHelperTest {
 

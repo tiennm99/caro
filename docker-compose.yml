@@ -2,7 +2,7 @@ services:
   server:
     build:
       context: .
-      dockerfile: landlords-server/Dockerfile
+      dockerfile: server/Dockerfile
     container_name: caro-server
     ports:
       - "1024:1024"  # TCP / Protobuf (CLI client)

@@ -1,6 +1,5 @@
 package org.nico.ratel.landlords.server.event;
 
-import org.nico.noson.Noson;
 import org.nico.ratel.landlords.channel.ChannelUtils;
 import org.nico.ratel.landlords.entity.ClientSide;
 import org.nico.ratel.landlords.entity.Room;
@@ -10,6 +9,7 @@ import org.nico.ratel.landlords.enums.ClientStatus;
 import org.nico.ratel.landlords.enums.RoomStatus;
 import org.nico.ratel.landlords.enums.RoomType;
 import org.nico.ratel.landlords.server.ServerContains;
+import org.nico.ratel.landlords.utils.JsonUtils;
 
 public class ServerEventListener_CODE_ROOM_CREATE implements ServerEventListener {
 
@@ -30,6 +30,6 @@ public class ServerEventListener_CODE_ROOM_CREATE implements ServerEventListener
 
 		ServerContains.addRoom(room);
 
-		ChannelUtils.pushToClient(clientSide.getChannel(), ClientEventCode.CODE_ROOM_CREATE_SUCCESS, Noson.reversal(room));
+		ChannelUtils.pushToClient(clientSide.getChannel(), ClientEventCode.CODE_ROOM_CREATE_SUCCESS, JsonUtils.toJson(room));
 	}
 }
