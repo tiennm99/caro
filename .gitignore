@@ -19,13 +19,17 @@ client/dist
 *.tar.gz
 *.rar
 
+# Gradle (after *.jar so wrapper jar is not excluded)
+.gradle
+gradle-app.setting
+!**/gradle/wrapper/gradle-wrapper.jar
+
 # Logs
 *.log
 *.log.*
 
 # IDE
 .idea
-.gradle
 .project
 .classpath
 .settings

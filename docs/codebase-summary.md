@@ -7,7 +7,7 @@ caro/
 ├── .github/
 │   └── workflows/
 │       └── build.yml                    CI: build + test (Java 25 + Node 22)
-├── server/                              Standalone Netty server (Java 25, Maven)
+├── server/                              Standalone Netty server (Java 25, Gradle)
 │   ├── src/main/java/com/miti99/caro/
 │   │   ├── common/
 │   │   │   ├── channel/                 Netty utilities (ChannelUtils)
@@ -33,8 +33,11 @@ caro/
 │   ├── src/test/java/com/miti99/caro/common/
 │   │   ├── helper/tests/GomokuHelperTest.java    29 JUnit 5 tests
 │   │   └── robot/tests/GomokuAITest.java          8 JUnit 5 tests
-│   ├── Dockerfile                       Multi-stage (maven:3.9-eclipse-temurin-25, eclipse-temurin:25-jre-alpine)
-│   └── pom.xml                          Standalone (no parent), maven-shade-plugin 3.6.0
+│   ├── gradle/wrapper/                  Gradle wrapper (9.2.1)
+│   ├── gradlew, gradlew.bat             Wrapper launchers
+│   ├── settings.gradle.kts              Root project name
+│   ├── build.gradle.kts                 Standalone build (Kotlin DSL) with Shadow plugin
+│   └── Dockerfile                       Multi-stage (eclipse-temurin:25-jdk, eclipse-temurin:25-jre-alpine)
 ├── client/                              Phaser 3 + Vite client
 │   ├── src/
 │   │   ├── main.js                      Phaser boot
@@ -166,27 +169,38 @@ caro/
 
 ## Build Configuration
 
-### Maven (Java)
+### Gradle (Java)
 
-**File:** `server/pom.xml` (standalone, no parent)
+**Files:**
+- `server/build.gradle.kts` — standalone Gradle build script (Kotlin DSL)
+- `server/settings.gradle.kts` — root project name (`caro-server`)
+- `server/gradle/wrapper/` — committed wrapper (Gradle 9.2.1)
+- `server/gradlew` / `server/gradlew.bat` — wrapper launchers
 
 **Coordinates:** `com.miti99.caro:caro-server:0.0.1-beta`
 
-**Key Plugins:**
-- `maven-compiler-plugin` 3.13.0 — Java 25 source/target (`<release>25</release>`), `-parameters`
-- `maven-surefire-plugin` 3.5.2 — JUnit 5 runner
-- `maven-shade-plugin` 3.6.0 — Fat jar with `ManifestResourceTransformer`, `ServicesResourceTransformer`, `AppendingTransformer` (for `META-INF/io.netty.versions.properties`)
+**Plugins:**
+- `java` — standard Java plugin
+- `com.gradleup.shadow:8.3.5` — fat jar packaging
+
+**Toolchain:** `JavaLanguageVersion.of(25)` — Gradle auto-provisions Java 25 if missing.
 
 **Dependencies:**
 - `io.netty:netty-all:4.1.115.Final` — async networking
 - `com.google.protobuf:protobuf-java:3.25.5` — binary serialization
 - `com.google.code.gson:gson:2.11.0` — JSON (supports records)
-- `org.junit.jupiter:junit-jupiter:5.11.3` — testing (test scope)
+- `org.junit:junit-bom:5.11.3` (platform) + `org.junit.jupiter:junit-jupiter` — testing
+
+**Shadow jar config:**
+- Main class: `com.miti99.caro.server.SimpleServer`
+- `mergeServiceFiles()` — preserve Netty SPIs
+- `append("META-INF/io.netty.versions.properties")` — merge Netty version file
+- Excludes signing metadata (`*.SF`, `*.DSA`, `*.RSA`)
 
 **Build Command:**
 ```bash
-mvn -f server/pom.xml clean package
-# Produces: server/target/caro-server-0.0.1-beta.jar (shaded fat jar)
+./server/gradlew -p server clean build
+# Produces: server/build/libs/caro-server-0.0.1-beta.jar (shaded fat jar)
 ```
 
 ### Vite (JavaScript)
@@ -218,7 +232,7 @@ mvn -f server/pom.xml clean package
 
 **Run Tests:**
 ```bash
-mvn -f server/pom.xml clean test
+./server/gradlew -p server clean test
 ```
 
 **Coverage:** ~100% for game logic (Board, GomokuHelper, GomokuAI)
@@ -279,7 +293,7 @@ mvn -f server/pom.xml clean test
 
 | Artifact | Location | Purpose |
 |----------|----------|---------|
-| Server jar | `server/target/caro-server-0.0.1-beta.jar` | Shaded executable fat jar |
+| Server jar | `server/build/libs/caro-server-0.0.1-beta.jar` | Shaded executable fat jar |
 | Client dist | `client/dist/` | Static files for web UI |
 
 ---
@@ -291,7 +305,7 @@ mvn -f server/pom.xml clean test
 **build.yml**
 - Trigger: push/PR on master (ignores `.md` and `.gitignore`)
 - Jobs:
-  - `build-server` — Setup Java 25 (Temurin), `mvn -f server/pom.xml -B clean verify`
+  - `build-server` — Setup Java 25 (Temurin) + `gradle/actions/setup-gradle`, run `./gradlew -p server --no-daemon clean build`
   - `build-client` — Setup Node 22, `npm ci`, `npm run build`
 
 Deployment is handled via Docker Compose from this repo; there is no hosted deployment pipeline.

@@ -75,7 +75,7 @@ Caro (also known as Gomoku or Five-in-a-Row) is a classic strategy board game. T
 | **Network Protocol** | Protobuf (TCP) + JSON/gson (WebSocket) | Dual protocol, language-agnostic |
 | **Game Logic** | Pure Java 25 (records, switch expressions) | Board state, move validation, win detection, AI |
 | **Client** | Phaser 3 + Vite + Vanilla JS | No framework dependencies (besides Phaser) |
-| **Build** | Maven 3.9 + maven-shade-plugin / Vite | Standalone server jar + static client bundle |
+| **Build** | Gradle 9.x (Kotlin DSL) + Shadow plugin / Vite | Standalone server jar + static client bundle |
 | **Deployment** | Docker Compose | Two services: `server` + `client` |
 
 ---
@@ -130,7 +130,7 @@ Caro (also known as Gomoku or Five-in-a-Row) is a classic strategy board game. T
 - No dead code (lint passes)
 - All public methods documented with JSDoc/Javadoc
 - File size under 200 lines for maintainability
-- CI pipeline green (`mvn verify` + `npm run build`)
+- CI pipeline green (`./gradlew build` + `npm run build`)
 
 ---
 
@@ -166,10 +166,11 @@ docker compose up --build -d
 
 ### Quick Start (Local)
 ```bash
-mvn -f server/pom.xml clean package -DskipTests
-java -jar server/target/caro-server-0.0.1-beta.jar -p 1024
+./server/gradlew -p server build -x test
+java -jar server/build/libs/caro-server-0.0.1-beta.jar -p 1024
 # In another terminal:
-cd client && npm install && npm run dev
+npm --prefix client install
+npm --prefix client run dev
 # Open http://localhost:5173
 ```
 
@@ -194,10 +195,10 @@ See `deployment-guide.md` for detailed setup instructions.
 | Protobuf | 3.25.5 | Binary serialization (TCP wire) |
 | gson | 2.11.0 | JSON serialization (WS wire) |
 | JUnit Jupiter | 5.11.3 | Test framework |
-| maven-shade-plugin | 3.6.0 | Fat jar packaging |
+| Gradle | 9.2.1 (wrapper) | Java build tool |
+| Shadow plugin | 8.3.5 | Fat jar packaging |
 | Phaser | 3.87.0 | Web game engine |
 | Vite | 6.3.1 | Web bundler |
-| Maven | 3.9+ | Java build tool |
 | Node.js | 22+ | Client dev tooling |
 
 ---

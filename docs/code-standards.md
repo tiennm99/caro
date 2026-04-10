@@ -601,7 +601,7 @@ git commit -m "test: add 20 new AI test cases"
 Before submitting code:
 
 - [ ] Compiles/builds without errors
-- [ ] All tests pass (run `mvn test` or `npm test`)
+- [ ] All tests pass (run `./gradlew -p server test` or `npm --prefix client test`)
 - [ ] No dead code or commented-out lines
 - [ ] File size under limit (200 lines Java, 300 JS)
 - [ ] Naming follows conventions
@@ -759,7 +759,7 @@ If removing a feature:
 
 **Recommended Tools:**
 - **IDE:** IntelliJ IDEA (Java), VS Code (JavaScript)
-- **Java:** Maven 3.9+, Java 25 (LTS) — uses `release 25`, records, switch expressions, `var`
+- **Java:** Gradle 9.x (wrapper committed), Java 25 (LTS) — uses toolchains, records, switch expressions, `var`
 - **JavaScript:** Node.js 22+, Vite 6+
 - **Version Control:** Git
 

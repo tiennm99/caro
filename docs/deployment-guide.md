@@ -6,8 +6,7 @@
 - **Java 25 (LTS)** — build + runtime
   - Download: https://adoptium.net/temurin/releases/?version=25
   - Verify: `java --version` should show `25.x`
-- **Maven 3.9+** — for building
-  - Verify: `mvn --version`
+- **Gradle** — NOT required. The project commits the Gradle wrapper (`./server/gradlew`) which pins Gradle 9.2.1 and auto-downloads if needed.
 - **Node.js 22+** — for the client (development only; not needed if using Docker)
   - Verify: `node --version`
 
@@ -62,15 +61,22 @@ cd caro
 ### 2. Build the Server
 
 ```bash
-mvn -f server/pom.xml clean package
+./server/gradlew -p server clean build
 ```
 
-Output:
-- `server/target/caro-server-0.0.1-beta.jar` — shaded fat jar (~20 MB)
+On Windows: `server\gradlew.bat -p server clean build`.
 
-With tests:
+Output:
+- `server/build/libs/caro-server-0.0.1-beta.jar` — shaded fat jar (~20 MB)
+
+Skip tests:
 ```bash
-mvn -f server/pom.xml clean verify
+./server/gradlew -p server build -x test
+```
+
+Run only tests:
+```bash
+./server/gradlew -p server test
 ```
 
 Tests: 29 GomokuHelperTest + 8 GomokuAITest (JUnit 5). All must pass.
@@ -78,7 +84,7 @@ Tests: 29 GomokuHelperTest + 8 GomokuAITest (JUnit 5). All must pass.
 ### 3. Run the Server
 
 ```bash
-java -jar server/target/caro-server-0.0.1-beta.jar -p 1024
+java -jar server/build/libs/caro-server-0.0.1-beta.jar -p 1024
 ```
 
 Output:
@@ -139,7 +145,7 @@ Port configuration:
 ### Option B: Docker Container
 
 The included `server/Dockerfile` is multi-stage:
-- **Build stage:** `maven:3.9-eclipse-temurin-25`
+- **Build stage:** `eclipse-temurin:25-jdk` + committed Gradle wrapper (`./server/gradlew`)
 - **Runtime stage:** `eclipse-temurin:25-jre-alpine`
 
 Build from repo root (context = `.`):
@@ -288,26 +294,25 @@ Connection endpoint is in `client/src/services/connection-service.js`. By defaul
 ### Java Unit Tests (JUnit 5)
 
 ```bash
-mvn -f server/pom.xml clean test
+./server/gradlew -p server clean test
 ```
 
 Expected output:
 ```
--------------------------------------------------------
- T E S T S
--------------------------------------------------------
-Running com.miti99.caro.common.helper.tests.GomokuHelperTest
-Tests run: 29, Failures: 0, Errors: 0, Skipped: 0
-Running com.miti99.caro.common.robot.tests.GomokuAITest
-Tests run: 8, Failures: 0, Errors: 0, Skipped: 0
+GomokuHelperTest > testHorizontalWin() PASSED
+... (29 tests)
+GomokuAITest > testEasyAIReturnsValidMove() PASSED
+... (8 tests)
 
-Results: 37 tests passed
+BUILD SUCCESSFUL
 ```
 
 Run a single test class:
 ```bash
-mvn -f server/pom.xml test -Dtest=GomokuHelperTest
+./server/gradlew -p server test --tests GomokuHelperTest
 ```
+
+Test report: `server/build/reports/tests/test/index.html`
 
 ### Client Tests
 
@@ -402,10 +407,10 @@ java -Xmx2g -jar caro-server-0.0.1-beta.jar -p 1024
 Before going live:
 
 - [ ] Java 25 installed and verified
-- [ ] `mvn -f server/pom.xml clean verify` passes (37 tests)
+- [ ] `./server/gradlew -p server clean build` passes (37 tests)
 - [ ] Server boots without errors
 - [ ] TCP port 1024 and WebSocket port 1025 open (firewall)
-- [ ] Client built: `cd client && npm ci && npm run build`
+- [ ] Client built: `npm --prefix client ci && npm --prefix client run build`
 - [ ] Client connects to correct server endpoint
 - [ ] Manual test: create game, make moves, join room, spectate
 - [ ] Monitoring configured (logs, memory, CPU)
@@ -417,15 +422,15 @@ Before going live:
 
 ### Update Server
 
-1. Back up current JAR
-2. Pull + rebuild: `git pull && mvn -f server/pom.xml clean package`
+1. Back up current jar
+2. Pull + rebuild: `git pull && ./server/gradlew -p server clean build`
 3. Stop: `kill $(pgrep -f caro-server)`
-4. Start new jar: `java -jar server/target/caro-server-0.0.1-beta.jar -p 1024`
+4. Start new jar: `java -jar server/build/libs/caro-server-0.0.1-beta.jar -p 1024`
 
 ### Update Client
 
-1. `cd client && git pull && npm ci && npm run build`
-2. Deploy `client/dist/` to hosting (or push to master for GH Pages auto-deploy)
+1. `git pull && npm --prefix client ci && npm --prefix client run build`
+2. Deploy `client/dist/` to hosting (or rebuild Docker image with `docker compose build client`)
 
 ### Zero-Downtime Update
 

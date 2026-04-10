@@ -18,8 +18,8 @@ jobs:
         with:
           distribution: temurin
           java-version: 25
-          cache: maven
-      - run: mvn -f server/pom.xml -B clean verify
+      - uses: gradle/actions/setup-gradle@v4
+      - run: ./gradlew -p server --no-daemon clean build
 
   build-client:
     name: Build Client

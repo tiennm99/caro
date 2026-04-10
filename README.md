@@ -15,7 +15,7 @@ Built on [Netty](https://netty.io/) (server) and [Phaser 3](https://phaser.io/) 
 
 ## Prerequisites
 
-- **Java 25** and **Maven 3.9+** — for building the server
+- **Java 25** — for building the server (Gradle wrapper is included; no separate Gradle install needed)
 - **Node.js 22+** — for the client (development only)
 - **Docker + Docker Compose** — optional, for containerized deployment
 
@@ -34,9 +34,11 @@ Then open `http://localhost:8080/` in your browser. The server listens on ports 
 ### 1. Build and run the server
 
 ```bash
-mvn -f server/pom.xml clean package
-java -jar server/target/caro-server-0.0.1-beta.jar -p 1024
+./server/gradlew -p server clean build
+java -jar server/build/libs/caro-server-0.0.1-beta.jar -p 1024
 ```
+
+On Windows use `server\gradlew.bat` instead of `./server/gradlew`.
 
 The server starts two listeners:
 - **TCP** on port `1024` (Protobuf)
@@ -45,9 +47,8 @@ The server starts two listeners:
 ### 2. Run the client (Vite dev server)
 
 ```bash
-cd client
-npm install
-npm run dev
+npm --prefix client install
+npm --prefix client run dev
 ```
 
 Open `http://localhost:5173` in your browser. Features:
@@ -70,7 +71,7 @@ To play multiplayer, open two browser tabs.
 
 ```
 caro/
-  server/     Standalone Netty server (Java 25, Maven, com.miti99.caro.{common,server})
+  server/     Standalone Netty server (Java 25, Gradle, com.miti99.caro.{common,server})
   client/     Phaser 3 web client (Vite + vanilla JS)
   docs/       Project documentation
 ```
@@ -117,10 +118,9 @@ client/src/
 ## Client Scripts
 
 ```bash
-cd client
-npm run dev      # Start Vite dev server (port 5173)
-npm run build    # Production build to client/dist/
-npm run preview  # Preview production build
+npm --prefix client run dev      # Start Vite dev server (port 5173)
+npm --prefix client run build    # Production build to client/dist/
+npm --prefix client run preview  # Preview production build
 ```
 
 ## Protocol
@@ -141,7 +141,8 @@ This project is based on [Ratel](https://github.com/ainilili/ratel) by [ainilili
 - **Original project**: [ainilili/ratel](https://github.com/ainilili/ratel) — Netty-based multiplayer game framework
 - **Networking**: [Netty](https://netty.io/) — asynchronous event-driven network framework
 - **Web game engine**: [Phaser 3](https://phaser.io/) — HTML5 game framework
-- **Build tool**: [Vite](https://vite.dev/) — next-generation frontend tooling
+- **Frontend build tool**: [Vite](https://vite.dev/) — next-generation frontend tooling
+- **Server build tool**: [Gradle](https://gradle.org/) with [Shadow plugin](https://gradleup.com/shadow/) for fat jars
 
 ## License
 

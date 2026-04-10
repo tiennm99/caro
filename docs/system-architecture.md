@@ -133,7 +133,7 @@ client/src/
 - `GomokuAI` — AI move selection (Easy, Medium, Hard)
 - Enums under `common/enums/`
 
-Note: `common` is a sub-package within the single `server/` Maven module. It is not a separate Maven artifact after the 2026-04-10 refactor.
+Note: `common` is a sub-package within the single `server/` Gradle project. It is not a separate artifact.
 
 ---
 
@@ -277,7 +277,7 @@ The pipeline has no static file handler. Non-WS HTTP requests to port 1025 retur
 
 ## Module Dependencies
 
-The project is now a **single standalone Maven module** (`server/`) plus a **Node project** (`client/`):
+The project is a **single standalone Gradle project** (`server/`) plus a **Node project** (`client/`):
 
 ```
 server/ (standalone: com.miti99.caro:caro-server:0.0.1-beta)
@@ -388,7 +388,7 @@ client/  (no dependencies except Phaser 3, Vite dev-only)
 ┌────────────────────────────────────┐
 │  GitHub Actions (CI)               │
 │  └─ build.yml:                     │
-│       - setup Java 25 + mvn verify │
+│       - setup Java 25 + gradlew build│
 │       - setup Node 22 + npm build  │
 │       - 37 JUnit 5 tests           │
 └────────────────────────────────────┘
