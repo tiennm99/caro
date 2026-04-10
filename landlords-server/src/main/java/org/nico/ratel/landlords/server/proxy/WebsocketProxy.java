@@ -19,6 +19,7 @@ import org.nico.ratel.landlords.print.SimplePrinter;
 
 import org.nico.ratel.landlords.server.ServerContains;
 import org.nico.ratel.landlords.server.handler.ProtobufTransferHandler;
+import org.nico.ratel.landlords.server.handler.StaticFileHandler;
 import org.nico.ratel.landlords.server.handler.WebsocketTransferHandler;
 import org.nico.ratel.landlords.server.timer.RoomClearTask;
 
@@ -44,6 +45,7 @@ public class WebsocketProxy implements Proxy{
                                     .addLast(new HttpServerCodec())
                                     .addLast(new ChunkedWriteHandler())
                                     .addLast(new HttpObjectAggregator(8192))
+                                    .addLast(new StaticFileHandler())
                                     .addLast("ws", new WebSocketServerProtocolHandler("/ratel"))
                                     .addLast(new WebsocketTransferHandler());
                         }
