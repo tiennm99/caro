@@ -76,6 +76,9 @@ export function addMoveToHistory(data) {
 
 /**
  * Show the game over overlay.
+ * Determines win/lose from the game result + the player's piece, not by
+ * comparing nicknames — nickname comparison breaks if the server's stored
+ * nickname drifts from the client's local copy (e.g. rejected-length cases).
  * @param {{ result: string, winnerNickname: string }} data
  */
 export function showGameOver(data) {
@@ -83,12 +86,14 @@ export function showGameOver(data) {
   if (data.result === 'DRAW') {
     resultText = 'Draw!';
     resultClass = 'draw';
-  } else if (data.winnerNickname === gameState.nickname) {
-    resultText = 'You Win!';
-    resultClass = 'win';
+  } else if (gameState.isSpectating) {
+    resultText = 'Game Over';
+    resultClass = 'draw';
   } else {
-    resultText = 'You Lose!';
-    resultClass = 'lose';
+    const iWon = (data.result === 'BLACK_WIN' && gameState.isBlack)
+      || (data.result === 'WHITE_WIN' && !gameState.isBlack);
+    resultText = iWon ? 'You Win!' : 'You Lose!';
+    resultClass = iWon ? 'win' : 'lose';
   }
 
   const el = overlay();

@@ -29,11 +29,13 @@ export function hideOverlay() {
 
 /** Show nickname entry screen. */
 export function showNicknameScreen() {
+  // Server enforces 1..10 chars (see ServerEventListener_CODE_CLIENT_NICKNAME_SET).
+  // Keep client limit in lockstep to avoid silent rejection + nickname desync.
   showOverlay(`
     <div class="menu-panel">
       <h1 class="menu-title">Gomoku</h1>
       <p class="menu-subtitle">Five in a row wins</p>
-      <input type="text" id="input-nickname" class="menu-input" placeholder="Enter nickname…" maxlength="20" />
+      <input type="text" id="input-nickname" class="menu-input" placeholder="Enter nickname (max 10)…" maxlength="10" />
       <button id="btn-play" class="menu-btn primary">Play</button>
     </div>
   `);
@@ -41,7 +43,7 @@ export function showNicknameScreen() {
   const btn = document.getElementById('btn-play');
   const submit = () => {
     const name = input.value.trim();
-    if (!name) return;
+    if (!name || name.length > 10) return;
     gameState.nickname = name;
     connectionService.send(ServerEventCode.NICKNAME_SET, name);
   };

@@ -176,9 +176,13 @@ export class GameScene extends Phaser.Scene {
    */
   _onGameOver(data) {
     showGameOver(data);
-    // Play win/lose sound
+    // Play win/lose sound. Determine outcome from result + piece, not nickname
+    // (see showGameOver comment — nickname comparison is unreliable).
     if (!this._audioCtx) return;
-    const isWin = data.winnerNickname === gameState.nickname;
+    const isWin = !gameState.isSpectating && (
+      (data.result === 'BLACK_WIN' && gameState.isBlack)
+      || (data.result === 'WHITE_WIN' && !gameState.isBlack)
+    );
     const freq = isWin ? [523, 659, 784] : [400, 300];
     freq.forEach((f, i) => {
       setTimeout(() => {
