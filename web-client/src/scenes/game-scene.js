@@ -123,18 +123,31 @@ export class GameScene extends Phaser.Scene {
 
   /**
    * Handle hover — show preview stone.
+   * Only clears/redraws when the target cell actually changes, otherwise the
+   * preview flickers on every micro-movement (clear + early-return without redraw).
    * @param {Phaser.Input.Pointer} pointer
    * @private
    */
   _handleHover(pointer) {
-    this.hoverGraphic.clear();
-    if (gameState.isSpectating || !gameState.isMyTurn()) return;
-    const pos = this.board.pixelToGrid(pointer.x, pointer.y);
-    if (!pos || gameState.isOccupied(pos.row, pos.col)) {
-      this.hoverPos = null;
+    if (gameState.isSpectating || !gameState.isMyTurn()) {
+      if (this.hoverPos) {
+        this.hoverGraphic.clear();
+        this.hoverPos = null;
+      }
       return;
     }
+    const pos = this.board.pixelToGrid(pointer.x, pointer.y);
+    if (!pos || gameState.isOccupied(pos.row, pos.col)) {
+      if (this.hoverPos) {
+        this.hoverGraphic.clear();
+        this.hoverPos = null;
+      }
+      return;
+    }
+    // Still on the same cell — keep existing preview drawn, nothing to do.
     if (this.hoverPos && this.hoverPos.row === pos.row && this.hoverPos.col === pos.col) return;
+    // Moved to a new cell — clear old preview and draw at new location.
+    this.hoverGraphic.clear();
     this.hoverPos = pos;
     const x = this.board.gridX(pos.col);
     const y = this.board.gridY(pos.row);
