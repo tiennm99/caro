@@ -161,8 +161,8 @@ Caro (also known as Gomoku or Five-in-a-Row) is a classic strategy board game. T
 | **Phase 1** | DONE | Convert ratel (Landlords) → Gomoku game logic |
 | **Phase 2** | DONE | Clean server/client code, write comprehensive tests (37 tests) |
 | **Phase 3** | DONE | Create Phaser 3 client with Vite |
-| **Phase 4** | DONE | Modernize CI/CD, auto-deploy to GitHub Pages |
-| **Phase 5** | DONE | Refactor to standalone server/client monorepo, Java 25, gson, JUnit 5, package rename com.miti99.caro (2026-04-10) |
+| **Phase 4** | DONE | Modernize CI (GitHub Actions build + test) |
+| **Phase 5** | DONE | Refactor to standalone server/client monorepo, Java 25, gson, JUnit 5, package rename com.miti99.caro, Docker Compose canonical deployment (2026-04-10) |
 | **Future** | IDEAS | Chat, accounts, leaderboards, better AI, proto-over-WS, mobile |
 
 ---

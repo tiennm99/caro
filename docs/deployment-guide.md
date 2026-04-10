@@ -191,14 +191,9 @@ sudo journalctl -u caro-server -f
 
 ## Client Deployment
 
-### Option A: GitHub Pages (Automatic)
+### Option A: Docker Compose (Recommended)
 
-Push to `master`. GitHub Actions `deploy-pages.yml` automatically:
-1. Builds client (`cd client && npm ci && npm run build`)
-2. Uploads `client/dist/` to Pages
-3. Publishes to `https://<username>.github.io/caro/`
-
-Triggers on any change under `client/**`.
+The `client` service in `docker-compose.yml` builds `client/dist/` and serves it via Nginx on host port `8080`. Already covered in the Quick Start above.
 
 ### Option B: Static Hosting (Netlify, Vercel, AWS S3)
 

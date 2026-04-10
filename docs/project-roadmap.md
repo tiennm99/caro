@@ -155,21 +155,14 @@ Caro (Gomoku) is a **completed multiplayer game** with all core features impleme
   - Executes all 37 tests
   - Builds client with npm (Node 22)
 
-- Set up GitHub Actions Deploy pipeline
-  - Triggers on push to master when `client/**` changes
-  - Builds client
-  - Auto-deploys to GitHub Pages
-  - URL: `https://tiennm99.github.io/caro/`
-
 **Key files:**
 - `.github/workflows/build.yml` — Build & test
-- `.github/workflows/deploy-pages.yml` — Auto-deploy
 
 **Outcome:**
-- No manual deployment needed
-- Client always up-to-date on master push
-- Tests must pass before merge
-- Zero-downtime rollback possible via tags
+- Tests and builds verified on every push
+- CI must be green before merge
+
+Note: the GitHub Pages deploy pipeline (`deploy-pages.yml`) was added in this phase and later removed on 2026-04-10 during the Phase 7 cleanup (Docker Compose is now the canonical deployment path).
 
 ---
 
@@ -190,7 +183,10 @@ Caro (Gomoku) is a **completed multiplayer game** with all core features impleme
 - Renamed `landlords-server/` → `server/`; renamed `web-client/` → `client/`.
 - Renamed packages `org.nico.ratel.landlords.*` → `com.miti99.caro.{common,server}.*` across 58 Java files.
 - Applied opportunistic Java 25 modernization: `Msg` DTO → `record`, switch expressions in `GomokuHelper.getWinnerMessage` + `GomokuAI.getNextMove` + `ServerEventListener_CODE_ROOM_CREATE_PVE.getDifficultyName`, `var` in `ChannelUtils` and `WebsocketTransferHandler`.
-- Updated `docker-compose.yml` (service + container rename), both GitHub Actions workflows (Java 25, new paths), and `client/package.json` (name + version).
+- Updated `docker-compose.yml` (service + container rename), `.github/workflows/build.yml` (Java 25, new paths), and `client/package.json` (name + version).
+- Removed `.github/workflows/deploy-pages.yml` (GitHub Pages pipeline); Docker Compose is now the canonical deployment path.
+- Removed unreferenced `demo.gif` and stale `landlords-client/target/` build cache.
+- Cleaned up `.gitignore` (deduped, removed stale `/ratel-landlords/.project` entry).
 - Rewrote `README.md` + all 6 docs in `./docs/` for the new structure.
 
 **Outcome:**
@@ -373,7 +369,7 @@ Caro (Gomoku) is a **completed multiplayer game** with all core features impleme
 ### Regular (Every Release)
 - Run all 37 tests (`mvn -f server/pom.xml clean verify`)
 - Build jar + client (`mvn package` / `npm run build`)
-- Deploy to GitHub Pages (auto on master push)
+- Rebuild Docker images: `docker compose build`
 - Update version in `server/pom.xml` + `client/package.json`
 
 ### Quarterly

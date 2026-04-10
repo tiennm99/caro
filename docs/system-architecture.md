@@ -386,29 +386,21 @@ client/  (no dependencies except Phaser 3, Vite dev-only)
 
 ```
 ┌────────────────────────────────────┐
-│  GitHub Actions (CI/CD)            │
-│  ├─ build.yml:                     │
-│  │    - setup Java 25 + mvn verify │
-│  │    - setup Node 22 + npm build  │
-│  ├─ Test: 37 JUnit 5 tests         │
-│  └─ deploy-pages.yml:              │
-│     - Build client/                │
-│     - Deploy client/dist/ to Pages │
+│  GitHub Actions (CI)               │
+│  └─ build.yml:                     │
+│       - setup Java 25 + mvn verify │
+│       - setup Node 22 + npm build  │
+│       - 37 JUnit 5 tests           │
 └────────────────────────────────────┘
                 │
-    ┌───────────┴──────────────┐
-    │                          │
-    ▼                          ▼
-┌────────────────────┐    ┌─────────────────┐
-│ Fat jar            │    │ GitHub Pages    │
-│ caro-server-0.0.1  │    │ Client UI       │
-│ -beta.jar          │    │ (static files)  │
-│ (Java 25 runtime)  │    └─────────────────┘
-└────────────────────┘
-    │
-    ├─ java -jar ... -p 1024
-    │     ↓
-    └─ Listens on :1024 (TCP), :1025 (WS only)
+                ▼
+┌────────────────────────────────────┐
+│ Docker Compose                     │
+│ ├─ caro-server (Java 25 fat jar)   │
+│ └─ caro-client (Nginx + dist/)     │
+└────────────────────────────────────┘
+
+Server listens on `:1024` (TCP) and `:1025` (WebSocket only).
 ```
 
 Docker Compose runs both services (`caro-server` + `caro-client`) from the single repo context.

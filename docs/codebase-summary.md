@@ -6,8 +6,7 @@
 caro/
 ├── .github/
 │   └── workflows/
-│       ├── build.yml                    CI: build + test (Java 25 + Node 22)
-│       └── deploy-pages.yml             CD: deploy client to GitHub Pages
+│       └── build.yml                    CI: build + test (Java 25 + Node 22)
 ├── server/                              Standalone Netty server (Java 25, Maven)
 │   ├── src/main/java/com/miti99/caro/
 │   │   ├── common/
@@ -290,15 +289,13 @@ mvn -f server/pom.xml clean test
 
 **GitHub Actions:**
 
-1. **build.yml**
-   - Trigger: push/PR on master (ignores `.md` and `.gitignore`)
-   - Jobs:
-     - `build-server` — Setup Java 25 (Temurin), `mvn -f server/pom.xml -B clean verify`
-     - `build-client` — Setup Node 22, `npm ci`, `npm run build`
+**build.yml**
+- Trigger: push/PR on master (ignores `.md` and `.gitignore`)
+- Jobs:
+  - `build-server` — Setup Java 25 (Temurin), `mvn -f server/pom.xml -B clean verify`
+  - `build-client` — Setup Node 22, `npm ci`, `npm run build`
 
-2. **deploy-pages.yml**
-   - Trigger: push to master when `client/**` changes
-   - Steps: build client, upload `client/dist`, deploy to GitHub Pages
+Deployment is handled via Docker Compose from this repo; there is no hosted deployment pipeline.
 
 ---
 

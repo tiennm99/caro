@@ -13,7 +13,7 @@ Open `http://localhost:5173` in your browser.
 
 ## Requirements
 
-- Node.js 18+
+- Node.js 22+
 - Game server running on `localhost:1024` (WebSocket on port `1025`)
 
 ## Server Connection
