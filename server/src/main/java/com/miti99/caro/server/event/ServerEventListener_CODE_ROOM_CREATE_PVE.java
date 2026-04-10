@@ -51,11 +51,10 @@ public class ServerEventListener_CODE_ROOM_CREATE_PVE implements ServerEventList
 	}
 
 	private String getDifficultyName(int difficulty) {
-		switch (difficulty) {
-			case 1: return "Easy";
-			case 2: return "Medium";
-			case 3: return "Hard";
-			default: return "Easy";
-		}
+		return switch (difficulty) {
+			case 2 -> "Medium";
+			case 3 -> "Hard";
+			default -> "Easy";
+		};
 	}
 }

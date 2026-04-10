@@ -27,12 +27,12 @@ public class WebsocketTransferHandler extends SimpleChannelInboundHandler<TextWe
 
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, TextWebSocketFrame frame) throws Exception {
-        Msg msg = JsonUtils.fromJson(frame.text(), Msg.class);
-        ServerEventCode code = ServerEventCode.valueOf(msg.getCode());
+        var msg = JsonUtils.fromJson(frame.text(), Msg.class);
+        var code = ServerEventCode.valueOf(msg.code());
         if (!Objects.equals(code, ServerEventCode.CODE_CLIENT_HEAD_BEAT)) {
-            ClientSide client = ServerContains.CLIENT_SIDE_MAP.get(getId(ctx.channel()));
+            var client = ServerContains.CLIENT_SIDE_MAP.get(getId(ctx.channel()));
             SimplePrinter.serverLog(client.getId() + " | " + client.getNickname() + " do:" + code.getMsg());
-            ServerEventListener.get(code).call(client, msg.getData());
+            ServerEventListener.get(code).call(client, msg.data());
         }
     }
 

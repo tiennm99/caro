@@ -20,16 +20,11 @@ public class GomokuAI {
 	}
 
 	public GameMove getNextMove(Board board, int difficulty) {
-		switch (difficulty) {
-			case 1:
-				return getEasyMove(board);
-			case 2:
-				return getMediumMove(board);
-			case 3:
-				return getHardMove(board);
-			default:
-				return getEasyMove(board);
-		}
+		return switch (difficulty) {
+			case 2 -> getMediumMove(board);
+			case 3 -> getHardMove(board);
+			default -> getEasyMove(board);
+		};
 	}
 
 	private GameMove getEasyMove(Board board) {

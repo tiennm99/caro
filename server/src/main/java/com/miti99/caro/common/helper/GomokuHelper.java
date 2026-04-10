@@ -60,21 +60,12 @@ public class GomokuHelper {
 			sb.append(String.format("%2d", row));
 			
 			for (int col = 0; col < Board.BOARD_SIZE; col++) {
-				PieceType piece = board.getPiece(row, col);
-				char symbol = '.';
-				
-				switch (piece) {
-					case BLACK:
-						symbol = 'B';
-						break;
-					case WHITE:
-						symbol = 'W';
-						break;
-					case EMPTY:
-						symbol = '.';
-						break;
-				}
-				
+				var piece = board.getPiece(row, col);
+				char symbol = switch (piece) {
+					case BLACK -> 'B';
+					case WHITE -> 'W';
+					case EMPTY -> '.';
+				};
 				sb.append(" ").append(symbol);
 			}
 			sb.append("\n");
@@ -126,15 +117,11 @@ public class GomokuHelper {
 	}
 
 	public static String getWinnerMessage(GameResult result) {
-		switch (result) {
-			case BLACK_WIN:
-				return "Black player wins!";
-			case WHITE_WIN:
-				return "White player wins!";
-			case DRAW:
-				return "Game ended in a draw!";
-			default:
-				return "Game in progress...";
-		}
+		return switch (result) {
+			case BLACK_WIN -> "Black player wins!";
+			case WHITE_WIN -> "White player wins!";
+			case DRAW -> "Game ended in a draw!";
+			case IN_PROGRESS -> "Game in progress...";
+		};
 	}
 }

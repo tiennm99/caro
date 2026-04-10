@@ -20,13 +20,10 @@ public class ChannelUtils {
 	public static void pushToClient(Channel channel, ClientEventCode code, String data, String info) {
 		if (channel != null) {
 			if (channel.pipeline().get("ws") != null) {
-				Msg msg = new Msg();
-				msg.setCode(code.toString());
-				msg.setData(data);
-				msg.setInfo(info);
+				var msg = new Msg(code.toString(), data, info);
 				channel.writeAndFlush(new TextWebSocketFrame(JsonUtils.toJson(msg)));
 			} else {
-				ClientTransferData.ClientTransferDataProtoc.Builder clientTransferData = ClientTransferData.ClientTransferDataProtoc.newBuilder();
+				var clientTransferData = ClientTransferData.ClientTransferDataProtoc.newBuilder();
 				if (code != null) {
 					clientTransferData.setCode(code.toString());
 				}
@@ -43,12 +40,10 @@ public class ChannelUtils {
 
 	public static ChannelFuture pushToServer(Channel channel, ServerEventCode code, String data) {
 		if (channel.pipeline().get("ws") != null) {
-			Msg msg = new Msg();
-			msg.setCode(code.toString());
-			msg.setData(data);
+			var msg = new Msg(code.toString(), data, null);
 			return channel.writeAndFlush(new TextWebSocketFrame(JsonUtils.toJson(msg)));
 		} else {
-			ServerTransferData.ServerTransferDataProtoc.Builder serverTransferData = ServerTransferData.ServerTransferDataProtoc.newBuilder();
+			var serverTransferData = ServerTransferData.ServerTransferDataProtoc.newBuilder();
 			if (code != null) {
 				serverTransferData.setCode(code.toString());
 			}
