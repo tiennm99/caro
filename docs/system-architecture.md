@@ -217,6 +217,7 @@ CODE_GAME_MOVE_INVALID           Move failed (validation error)
 CODE_GAME_WIN                    You won
 CODE_GAME_LOSE                   You lost
 CODE_GAME_DRAW                   Draw (board full)
+CODE_GAME_OVER                   Game ended; payload: { result, winnerNickname }
 CODE_CLIENT_KICK                 Disconnected by server
 ```
 
@@ -404,7 +405,7 @@ web-client (no dependencies except Phaser 3, Vite)
 ```
 ┌────────────────────────────────────┐
 │  GitHub Actions (CI/CD)            │
-│  ├─ Build.yml: mvn + npm build     │
+│  ├─ build.yml: mvn + npm build     │
 │  ├─ Test: Run 37 unit tests        │
 │  └─ Deploy: Push web-client/ to    │
 │     GitHub Pages                   │

@@ -6,7 +6,7 @@
 caro/
 ├── .github/
 │   └── workflows/
-│       ├── Build.yml                    CI: build + test
+│       ├── build.yml                    CI: build + test
 │       └── deploy-pages.yml             CD: deploy web client to GitHub Pages
 ├── landlords-common/                    Shared Java library (game logic, entities, protocol)
 │   ├── src/main/java/org/nico/ratel/landlords/
@@ -454,7 +454,7 @@ mvn test -DskipTests=false
 
 **GitHub Actions:**
 
-1. **Build.yml**
+1. **build.yml**
    - Trigger: Push to any branch
    - Steps:
      - Checkout code

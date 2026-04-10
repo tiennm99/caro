@@ -17,8 +17,41 @@
 
 ### Optional
 - **Git** — for cloning repository
-- **Docker** — for containerized deployment
+- **Docker + Docker Compose** — for containerized deployment (recommended for quick start)
 - **nginx/Apache** — for reverse proxy (if needed)
+
+---
+
+## Quick Start (Docker Compose)
+
+**Fastest way to get started — single command:**
+
+```bash
+docker compose up --build
+```
+
+**Then:**
+- Open `http://localhost:8080` in your browser
+- Server API: `http://localhost:1024` (TCP), `http://localhost:1025` (WebSocket)
+
+**Stop:**
+```bash
+docker compose down
+```
+
+**What's running:**
+- **caro-server** — Java server on `1024` (TCP) + `1025` (WebSocket/HTTP)
+- **caro-web-client** — Nginx serving web UI on host port `8080`
+
+**Storage:** In-memory only; games not persisted. Restart to clear all rooms.
+
+**Logs:**
+```bash
+docker compose logs -f caro-server
+docker compose logs -f caro-web-client
+```
+
+**Prerequisites:** Docker + Docker Compose
 
 ---
 

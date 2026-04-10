@@ -173,7 +173,7 @@ Caro (Gomoku) is a **completed multiplayer game** with all core features impleme
   - URL: `https://tiennm99.github.io/caro/`
 
 **Key files:**
-- `.github/workflows/Build.yml` — Build & test
+- `.github/workflows/build.yml` — Build & test
 - `.github/workflows/deploy-pages.yml` — Auto-deploy
 
 **Outcome:**
