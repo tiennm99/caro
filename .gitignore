@@ -48,3 +48,7 @@ target
 /.project
 /ratel-landlords/.project
 .vscode
+
+# Web client
+node_modules
+web-client/dist

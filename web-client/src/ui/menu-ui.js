@@ -1,0 +1,178 @@
+/**
+ * Menu UI — DOM overlay for nickname, lobby, PVP/PVE menus, room list, waiting room.
+ * @module menu-ui
+ */
+
+import { connectionService } from '../services/connection-service.js';
+import { eventBus } from '../services/event-bus.js';
+import { gameState } from '../services/game-state-service.js';
+import { ServerEventCode, ClientEventCode } from '../config/protocol-constants.js';
+
+const overlay = () => document.getElementById('ui-overlay');
+
+/**
+ * Show a screen in the overlay.
+ * @param {string} html
+ */
+function showOverlay(html) {
+  const el = overlay();
+  el.innerHTML = html;
+  el.style.display = 'flex';
+}
+
+/** Hide the overlay. */
+export function hideOverlay() {
+  const el = overlay();
+  el.innerHTML = '';
+  el.style.display = 'none';
+}
+
+/** Show nickname entry screen. */
+export function showNicknameScreen() {
+  showOverlay(`
+    <div class="menu-panel">
+      <h1 class="menu-title">Gomoku</h1>
+      <p class="menu-subtitle">Five in a row wins</p>
+      <input type="text" id="input-nickname" class="menu-input" placeholder="Enter nickname…" maxlength="20" />
+      <button id="btn-play" class="menu-btn primary">Play</button>
+    </div>
+  `);
+  const input = document.getElementById('input-nickname');
+  const btn = document.getElementById('btn-play');
+  const submit = () => {
+    const name = input.value.trim();
+    if (!name) return;
+    gameState.nickname = name;
+    connectionService.send(ServerEventCode.NICKNAME_SET, name);
+  };
+  btn.addEventListener('click', submit);
+  input.addEventListener('keydown', (e) => { if (e.key === 'Enter') submit(); });
+  input.focus();
+}
+
+/** Show lobby (main menu). */
+export function showLobby() {
+  showOverlay(`
+    <div class="menu-panel">
+      <h2 class="menu-title">Lobby</h2>
+      <p class="menu-subtitle">Welcome, <span class="accent">${gameState.nickname}</span></p>
+      <button id="btn-pvp" class="menu-btn primary">Player vs Player</button>
+      <button id="btn-pve" class="menu-btn primary">Player vs AI</button>
+    </div>
+  `);
+  document.getElementById('btn-pvp').addEventListener('click', showPvpMenu);
+  document.getElementById('btn-pve').addEventListener('click', showPveMenu);
+}
+
+/** Show PVP submenu. */
+function showPvpMenu() {
+  showOverlay(`
+    <div class="menu-panel">
+      <h2 class="menu-title">Player vs Player</h2>
+      <button id="btn-create" class="menu-btn primary">Create Room</button>
+      <button id="btn-rooms" class="menu-btn secondary">Join Room</button>
+      <button id="btn-back" class="menu-btn ghost">← Back</button>
+    </div>
+  `);
+  document.getElementById('btn-create').addEventListener('click', () => {
+    connectionService.send(ServerEventCode.ROOM_CREATE, '');
+  });
+  document.getElementById('btn-rooms').addEventListener('click', () => {
+    connectionService.send(ServerEventCode.GET_ROOMS, '');
+  });
+  document.getElementById('btn-back').addEventListener('click', showLobby);
+}
+
+/** Show PVE difficulty selection. */
+function showPveMenu() {
+  showOverlay(`
+    <div class="menu-panel">
+      <h2 class="menu-title">Player vs AI</h2>
+      <p class="menu-subtitle">Select difficulty</p>
+      <button id="btn-easy" class="menu-btn primary">Easy</button>
+      <button id="btn-medium" class="menu-btn primary">Medium</button>
+      <button id="btn-hard" class="menu-btn primary">Hard</button>
+      <button id="btn-back" class="menu-btn ghost">← Back</button>
+    </div>
+  `);
+  document.getElementById('btn-easy').addEventListener('click', () => {
+    connectionService.send(ServerEventCode.ROOM_CREATE_PVE, '1');
+  });
+  document.getElementById('btn-medium').addEventListener('click', () => {
+    connectionService.send(ServerEventCode.ROOM_CREATE_PVE, '2');
+  });
+  document.getElementById('btn-hard').addEventListener('click', () => {
+    connectionService.send(ServerEventCode.ROOM_CREATE_PVE, '3');
+  });
+  document.getElementById('btn-back').addEventListener('click', showLobby);
+}
+
+/**
+ * Show room list.
+ * @param {Array} rooms
+ */
+export function showRoomList(rooms) {
+  const rows = Array.isArray(rooms) ? rooms : [];
+  const tableRows = rows.length === 0
+    ? '<tr><td colspan="4" class="empty-state">No rooms available</td></tr>'
+    : rows.map(r => `
+        <tr>
+          <td>${r.roomId || r.id}</td>
+          <td>${r.roomOwner || ''}</td>
+          <td>${r.roomClientCount || 0}/2</td>
+          <td>
+            <button class="menu-btn small primary" data-join="${r.roomId || r.id}">Join</button>
+            <button class="menu-btn small secondary" data-watch="${r.roomId || r.id}">Watch</button>
+          </td>
+        </tr>`).join('');
+
+  showOverlay(`
+    <div class="menu-panel wide">
+      <h2 class="menu-title">Available Rooms</h2>
+      <table class="room-table">
+        <thead><tr><th>ID</th><th>Owner</th><th>Players</th><th>Actions</th></tr></thead>
+        <tbody>${tableRows}</tbody>
+      </table>
+      <div class="menu-row">
+        <button id="btn-refresh" class="menu-btn secondary">↻ Refresh</button>
+        <button id="btn-back" class="menu-btn ghost">← Back</button>
+      </div>
+    </div>
+  `);
+  overlay().querySelectorAll('[data-join]').forEach(btn => {
+    btn.addEventListener('click', () => connectionService.send(ServerEventCode.ROOM_JOIN, btn.dataset.join));
+  });
+  overlay().querySelectorAll('[data-watch]').forEach(btn => {
+    btn.addEventListener('click', () => connectionService.send(ServerEventCode.GAME_WATCH, btn.dataset.watch));
+  });
+  document.getElementById('btn-refresh').addEventListener('click', () => {
+    connectionService.send(ServerEventCode.GET_ROOMS, '');
+  });
+  document.getElementById('btn-back').addEventListener('click', showPvpMenu);
+}
+
+/** Show waiting room. */
+export function showWaitingRoom() {
+  showOverlay(`
+    <div class="menu-panel">
+      <h2 class="menu-title">Waiting Room</h2>
+      <p>Room ID: <span class="accent">${gameState.roomId}</span></p>
+      <div class="spinner"></div>
+      <p class="menu-subtitle">Waiting for opponent…</p>
+      <button id="btn-leave" class="menu-btn danger">Leave</button>
+    </div>
+  `);
+  document.getElementById('btn-leave').addEventListener('click', () => {
+    connectionService.send(ServerEventCode.CLIENT_EXIT, '');
+  });
+}
+
+// Register server event handlers for menu navigation
+eventBus.on(ClientEventCode.SHOW_OPTIONS, showLobby);
+eventBus.on(ClientEventCode.SHOW_ROOMS, showRoomList);
+eventBus.on(ClientEventCode.ROOM_CREATE_SUCCESS, (data) => {
+  gameState.roomId = data.id;
+  showWaitingRoom();
+});
+eventBus.on(ClientEventCode.CLIENT_EXIT, showLobby);
+eventBus.on(ClientEventCode.CLIENT_KICK, showLobby);
