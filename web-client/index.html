@@ -33,7 +33,11 @@
       pointer-events: none;
       z-index: 10;
     }
-    #ui-overlay > * { pointer-events: auto; }
+    /* Menu panels etc. are direct children and should capture clicks.
+       Exception: .game-hud is a full-canvas wrapper that must stay click-through
+       so Phaser still receives pointer events on the board. Its interactive
+       children (.hud-top, .hud-side, .hud-bottom) re-enable pointer-events below. */
+    #ui-overlay > *:not(.game-hud) { pointer-events: auto; }
 
     /* Menu panels */
     .menu-panel {
