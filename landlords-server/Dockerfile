@@ -6,12 +6,10 @@ WORKDIR /build
 COPY pom.xml .
 COPY landlords-common/pom.xml landlords-common/
 COPY landlords-server/pom.xml landlords-server/
-COPY landlords-client/pom.xml landlords-client/
 
-# Copy sources (common + server only — client not needed for runtime)
+# Copy sources (common + server)
 COPY landlords-common/src landlords-common/src
 COPY landlords-server/src landlords-server/src
-COPY landlords-client/src landlords-client/src
 COPY protoc-resource protoc-resource
 
 RUN mvn -B -pl landlords-server -am clean package -DskipTests

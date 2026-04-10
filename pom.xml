@@ -93,7 +93,6 @@
 	</build>
 
 	<modules>
-		<module>landlords-client</module>
 		<module>landlords-server</module>
 		<module>landlords-common</module>
 	</modules>
