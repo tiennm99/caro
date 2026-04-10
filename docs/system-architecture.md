@@ -6,44 +6,45 @@ Caro is a **client-server multiplayer game** with dual-protocol networking:
 
 ```
 ┌──────────────┐  WebSocket   ┌──────────────────────────────┐
-│ Web Client   │◄────/JSON───►│                              │
-│ (Phaser 3)   │              │     Java Netty Server        │
+│ Client       │◄────/JSON───►│                              │
+│ (Phaser 3)   │              │  Java 25 Netty Server        │
 └──────────────┘              │  Port 1024: TCP/Protobuf     │
                               │  Port 1025: WebSocket/JSON   │
-┌──────────────┐  TCP         │  Port 1025: HTTP (static)    │
-│ CLI Client   │◄────PB──────►│                              │
-│ (Java)       │              │  Game Logic:                 │
-└──────────────┘              │  - Room Management           │
+                              │                              │
+                              │  Game Logic:                 │
+                              │  - Room Management           │
                               │  - Move Validation           │
                               │  - AI (3 difficulties)       │
                               │  - Win Detection             │
                               └──────────────────────────────┘
 ```
 
+Non-WebSocket HTTP requests to port `1025` are rejected by Netty with a default 400/403 (there is no static file handler).
+
 ---
 
 ## Component Architecture
 
-### 1. Server (Java Netty)
+### 1. Server (Java 25 + Netty)
 
-**File:** `landlords-server/src/main/java/org/nico/ratel/landlords/server/`
+**File:** `server/src/main/java/com/miti99/caro/server/`
 
 **Responsibilities:**
 - Listen on TCP (1024) and WebSocket (1025) simultaneously
-- Parse incoming messages (Protobuf or JSON)
+- Parse incoming messages (Protobuf or JSON via gson)
 - Execute game logic (move validation, win checks)
 - Broadcast state updates to all connected clients
 - Run AI for PVE games
 - Manage room lifecycle (create, join, spectate, cleanup)
 
 **Key Classes:**
-- `SimpleServer` — Entry point, starts Netty bootstrap for both ports
-- `ServerEventListener` — Base class for event handlers
+- `SimpleServer` — Entry point; starts Netty bootstrap for both ports
+- `ServerEventListener` — Base for event handlers (in `event/`)
 - `ServerEventListener_CODE_*` — Individual handlers for each ServerEventCode
 - `ProtobufTransferHandler` — Netty pipeline handler for TCP
-- `WebsocketTransferHandler` — Netty pipeline handler for WebSocket
-- `StaticFileHandler` — HTTP file serving (index.html, CSS, JS, etc.)
-- `ProtobufProxy` / `WebsocketProxy` — Send messages back to clients
+- `WebsocketTransferHandler` — Netty pipeline handler for WebSocket (deserializes `Msg` record via gson)
+- `SecondProtobufCodec` — Second-pass protobuf codec
+- `ProtobufProxy` / `WebsocketProxy` — Bootstrap the TCP and WebSocket server sockets
 
 **Event Codes (ServerEventCode)** — sent by clients:
 ```
@@ -66,9 +67,9 @@ CODE_GAME_WATCH_EXIT          Stop spectating
 
 ---
 
-### 2. Web Client (Phaser 3 + Vite)
+### 2. Client (Phaser 3 + Vite)
 
-**File:** `web-client/src/`
+**File:** `client/src/`
 
 **Responsibilities:**
 - Render 15x15 game board with wood texture
@@ -83,7 +84,7 @@ CODE_GAME_WATCH_EXIT          Stop spectating
 **Architecture:**
 
 ```
-web-client/src/
+client/src/
 ├── main.js                     # Phaser boot, create game instance
 ├── config/
 │   ├── game-config.js          # Phaser config (resolution, scale, physics)
@@ -105,51 +106,34 @@ web-client/src/
 ```
 
 **Key Patterns:**
-- **Event Bus:** Decouples scenes, services, UI components. Emit `event` → listeners respond
-- **Game State Service:** Single source of truth for board, room, players
-- **Connection Service:** Handles reconnect logic and heartbeat (30-second interval)
+- **Event Bus:** Decouples scenes, services, UI components. `emit(event, data)` → listeners respond.
+- **Game State Service:** Single source of truth for board, room, players.
+- **Connection Service:** Reconnect logic and heartbeat (30-second interval).
 - **WebSocket Message Format:** `{ code: "CODE_GAME_MOVE", data: "{...}", info: "" }`
 
 ---
 
-### 3. CLI Client (Java)
+### 3. Shared code (common sub-package)
 
-**File:** `landlords-client/src/main/java/org/nico/ratel/landlords/client/`
-
-**Responsibilities:**
-- Connect to server via TCP (Protobuf) or WebSocket
-- Parse command-line arguments (-h host, -p port, -ptl protocol)
-- Read moves from stdin (format: `row,col` or `exit`)
-- Display board state in terminal
-- Handle disconnection gracefully
-
-**Key Classes:**
-- `SimpleClient` — Entry point, arg parsing, connection setup
-- `ClientEventListener` — Base for event handlers
-- `ClientEventListener_CODE_*` — Individual handlers
-- `ProtobufTransferHandler` / `WebsocketTransferHandler` — Protocol handlers
-- `ProtobufProxy` / `WebsocketProxy` — Send moves to server
-
----
-
-### 4. Common Library (Shared Code)
-
-**File:** `landlords-common/src/main/java/org/nico/ratel/landlords/`
+**File:** `server/src/main/java/com/miti99/caro/common/`
 
 **Responsibilities:**
-- Define shared entities (Board, Room, GameMove)
-- Define shared enums (ServerEventCode, ClientEventCode, PieceType, GameResult)
-- Implement game logic (move validation, win detection, AI)
-- Utilities (JSON, List, Options, Time helpers)
+- Shared entities (Board, Room, GameMove, Msg, ClientSide)
+- Shared enums (ServerEventCode, ClientEventCode, PieceType, GameResult, RoomType, RoomStatus)
+- Game logic (move validation, win detection, AI)
+- Utilities (gson JSON, list, options, stream helpers)
 
 **Key Classes:**
 - `Board` — 15x15 grid, move validation, win/draw detection
 - `Room` — Encapsulates game state, players, spectators
-- `GameMove` — Represents single move (row, col, piece type)
-- `ServerTransferData` / `ClientTransferData` — Network message wrappers
-- `GomokuHelper` — Win detection (4 directions: horizontal, vertical, 2 diagonals)
-- `GomokuAI` — AI move selection (Easy, Medium, Hard difficulties)
-- Enums: `ServerEventCode`, `ClientEventCode`, `PieceType`, `GameResult`, `RoomType`, `RoomStatus`
+- `GameMove` — Represents a single move (row, col, piece type, playerId, timestamp)
+- `Msg` — **record** for WebSocket JSON envelope (`code`, `data`, `info`)
+- `ServerTransferData` / `ClientTransferData` — Protobuf-generated wire types
+- `GomokuHelper` — Win detection (4 directions)
+- `GomokuAI` — AI move selection (Easy, Medium, Hard)
+- Enums under `common/enums/`
+
+Note: `common` is a sub-package within the single `server/` Maven module. It is not a separate Maven artifact after the 2026-04-10 refactor.
 
 ---
 
@@ -157,7 +141,7 @@ web-client/src/
 
 ### Message Format
 
-**WebSocket (JSON):**
+**WebSocket (JSON, via gson):**
 ```json
 {
   "code": "CODE_GAME_MOVE",
@@ -166,8 +150,10 @@ web-client/src/
 }
 ```
 
+gson 2.11 serializes the `Msg` record by reading its canonical components (`code`, `data`, `info`). Null components are skipped by default, preserving wire compatibility with the previous setter-based class.
+
 **TCP (Protobuf):**
-Binary format (serialized via Protobuf 3).
+Binary format (serialized via Protobuf 3.25.5).
 
 ### Connection Flow
 
@@ -180,23 +166,23 @@ Client                          Server
   │                                   │ Validate, store
   │◄─────────── CODE_CLIENT_CONNECT ──│ (send list of existing rooms)
   │
-  ├─ (3) CODE_ROOM_CREATE_PVP ─────────────────────►│
+  ├─ (3) CODE_ROOM_CREATE ─────────────────────►│
   │                                   │ Create room, assign player
-  │◄─────────── CODE_ROOM_CREATE_SUCCESS ──────────│
+  │◄─────────── CODE_ROOM_CREATE_SUCCESS ──────│
   │
   ├─ (4) [Other client joins room]
   │                                   │ Both ready
   │◄─────────── CODE_GAME_STARTING ──│ (send board, initial state)
   │
-  ├─ (5) CODE_GAME_MOVE ────────────────────────────►│
+  ├─ (5) CODE_GAME_MOVE ────────────────────────►│
   │                                   │ Validate, apply, check win
-  │◄─────────── CODE_GAME_MOVE_SUCCESS ───────────│
+  │◄─────────── CODE_GAME_MOVE_SUCCESS ────────│
   │                                   │ Broadcast to both clients
   │◄─────────── (move update) ────────│
   │
   ├─ ... [repeating moves] ...
   │
-  ├─ (N) [Winning move] ────────────────────────────►│
+  ├─ (N) [Winning move] ────────────────────────►│
   │                                   │ Check win condition
   │◄─────────── CODE_GAME_WIN ────────│ (or CODE_GAME_LOSE for opponent)
   │◄─────────── CODE_GAME_OVER ───────│ (final state)
@@ -259,7 +245,7 @@ Win if count ≥ 5.
 
 ### AI Move Selection (GomokuAI)
 
-Three difficulties:
+Three difficulties (dispatched via a Java 25 switch expression):
 
 | Difficulty | Logic | Speed |
 |-----------|-------|-------|
@@ -269,34 +255,43 @@ Three difficulties:
 
 ---
 
-## Module Dependencies
+## Netty Pipeline (WebSocket)
 
 ```
-landlords-common (shared lib)
-    ├── entities (Board, Room, GameMove, etc.)
-    ├── enums (ServerEventCode, ClientEventCode, GameResult, etc.)
-    ├── game logic (GomokuHelper, GomokuAI)
-    └── utilities (JSON, ListUtils, TimeHelper, etc.)
+IdleStateHandler              (30-min read-idle detection)
+  ↓
+HttpServerCodec
+  ↓
+ChunkedWriteHandler
+  ↓
+HttpObjectAggregator (8 KB)
+  ↓
+WebSocketServerProtocolHandler ("/ratel")
+  ↓
+WebsocketTransferHandler       (decode Msg record via gson, dispatch event listener)
+```
 
-landlords-server (depends on landlords-common)
-    ├── Netty server bootstrap
-    ├── TCP handler (Protobuf codec)
-    ├── WebSocket handler
-    ├── Static file handler (HTTP)
-    ├── Event listeners (game logic)
-    └── Room/player managers
+No `StaticFileHandler` in the pipeline — the old built-in web UI was removed on 2026-04-10. Non-WS HTTP requests return Netty's default HTTP error.
 
-landlords-client (depends on landlords-common)
-    ├── Netty client bootstrap
-    ├── TCP or WebSocket handler
-    ├── Event listeners (local display)
-    └── Terminal UI
+---
 
-web-client (no dependencies except Phaser 3, Vite)
-    ├── Phaser game instance
-    ├── WebSocket connection
-    ├── Event-driven scenes/services
-    └── Canvas rendering (board, stones, UI)
+## Module Dependencies
+
+The project is now a **single standalone Maven module** (`server/`) plus a **Node project** (`client/`):
+
+```
+server/ (standalone: com.miti99.caro:caro-server:0.0.1-beta)
+├── common/  (shared entities, enums, game logic, utils)
+│   ├── Netty (runtime transitive)
+│   ├── Protobuf 3.25.5
+│   └── gson 2.11.0
+└── server/  (entry point, event listeners, handlers, proxies, timers)
+
+client/  (no dependencies except Phaser 3, Vite dev-only)
+├── Phaser game instance
+├── WebSocket connection
+├── Event-driven scenes/services
+└── Canvas rendering (board, stones, UI)
 ```
 
 ---
@@ -320,40 +315,26 @@ web-client (no dependencies except Phaser 3, Vite)
 ### GameMove
 - **row, col:** Position (0-14)
 - **piece:** `PieceType.BLACK` or `WHITE`
-- **timestamp:** When move was made
+- **playerId:** player that made the move
+- **timestamp:** when the move was made
 
----
-
-## File Serving (Static Web UI)
-
-**Flow:**
-1. Client makes HTTP request (e.g., `GET /index.html`)
-2. `StaticFileHandler` intercepts in Netty pipeline
-3. If path is `/ratel`, pass to WebSocket handler
-4. Otherwise, map to classpath resource: `static/{path}`
-5. Look up MIME type (html, css, js, png, svg, etc.)
-6. Return 200 OK with file content
-
-**Supported Extensions:**
-- `.html`, `.css`, `.js`, `.json` — text with charset UTF-8
-- `.mp3` — audio/mpeg
-- `.png`, `.jpg`, `.svg`, `.ico` — images
-
-**Security:** Path traversal (`..`) rejected, returns 403 Forbidden.
+### Msg (record)
+- **code:** event code (`String`)
+- **data:** payload (JSON-encoded `String`)
+- **info:** optional metadata (`String`)
 
 ---
 
 ## Concurrency & Synchronization
 
 ### Server
-- **Netty Threading:** Each connection has dedicated event loop thread
+- **Netty Threading:** Each connection has a dedicated event loop thread
 - **Room State:** Synchronized via `ServerContains` singleton (all rooms in memory)
 - **Thread Safety:** No explicit locks; Netty guarantees sequential processing per connection
-- **AI Moves:** Executed in event loop thread (blocking for < 1 sec)
+- **AI Moves:** Executed in the event loop thread (blocking for < 1 sec; acceptable for current scale)
 
 ### Client
-- **Web Client:** Async via promises (WebSocket events trigger state updates)
-- **CLI Client:** Blocking on stdin, concurrent with network reads
+- **Client:** Async via promises (WebSocket events trigger state updates)
 
 ---
 
@@ -379,7 +360,7 @@ web-client (no dependencies except Phaser 3, Vite)
 | **Server latency** | < 50ms per move | ~10-20ms (Netty, in-memory) |
 | **Network latency** | < 500ms round-trip | Depends on client location |
 | **AI response (Hard)** | < 1 second | ~800ms (depth 3 minimax) |
-| **Web client load** | < 2 seconds | ~500ms (Vite optimized) |
+| **Client load** | < 2 seconds | ~500ms (Vite optimized, ~1.5 MB bundle / 346 KB gzipped) |
 | **Concurrent players** | 100+ | Tested to 50+, no issues |
 
 ---
@@ -390,6 +371,7 @@ web-client (no dependencies except Phaser 3, Vite)
 - **No authentication** — all players anonymous (nickname only)
 - **No encryption** — TCP and WebSocket unencrypted
 - **Input validation** — Move coordinates validated, nicknames sanitized
+- **Reduced attack surface** — built-in static file serving removed (no path traversal risk, no stale HTML/JS)
 
 ### Recommendations (Not Implemented)
 - Use TLS/WSS for encrypted connections
@@ -405,25 +387,31 @@ web-client (no dependencies except Phaser 3, Vite)
 ```
 ┌────────────────────────────────────┐
 │  GitHub Actions (CI/CD)            │
-│  ├─ build.yml: mvn + npm build     │
-│  ├─ Test: Run 37 unit tests        │
-│  └─ Deploy: Push web-client/ to    │
-│     GitHub Pages                   │
+│  ├─ build.yml:                     │
+│  │    - setup Java 25 + mvn verify │
+│  │    - setup Node 22 + npm build  │
+│  ├─ Test: 37 JUnit 5 tests         │
+│  └─ deploy-pages.yml:              │
+│     - Build client/                │
+│     - Deploy client/dist/ to Pages │
 └────────────────────────────────────┘
                 │
     ┌───────────┴──────────────┐
     │                          │
     ▼                          ▼
-┌──────────────────┐    ┌─────────────────┐
-│ JAR (Release)    │    │ GitHub Pages    │
-│ landlords-server │    │ Web UI          │
-│ (Java 8+)        │    │ Static files    │
-└──────────────────┘    └─────────────────┘
+┌────────────────────┐    ┌─────────────────┐
+│ Fat jar            │    │ GitHub Pages    │
+│ caro-server-0.0.1  │    │ Client UI       │
+│ -beta.jar          │    │ (static files)  │
+│ (Java 25 runtime)  │    └─────────────────┘
+└────────────────────┘
     │
     ├─ java -jar ... -p 1024
     │     ↓
-    └─ Listens on :1024 (TCP), :1025 (WS + HTTP)
+    └─ Listens on :1024 (TCP), :1025 (WS only)
 ```
+
+Docker Compose runs both services (`caro-server` + `caro-client`) from the single repo context.
 
 ---
 
@@ -431,26 +419,28 @@ web-client (no dependencies except Phaser 3, Vite)
 
 | File | Purpose |
 |------|---------|
-| `SimpleServer.java` | Server entry point |
-| `SimpleClient.java` | CLI client entry point |
-| `main.js` | Web client entry point (Phaser) |
-| `Board.java` | Game board state + validation |
-| `GomokuHelper.java` | Win detection algorithm |
-| `GomokuAI.java` | AI move selection (3 difficulties) |
-| `Room.java` | Game room state container |
-| `ServerEventListener_*.java` | Event handlers (game logic) |
-| `game-scene.js` | Web client main gameplay scene |
-| `connection-service.js` | WebSocket client |
-| `protocol-constants.js` | Event code enums |
+| `server/src/main/java/com/miti99/caro/server/SimpleServer.java` | Server entry point |
+| `client/src/main.js` | Client entry point (Phaser) |
+| `server/src/main/java/com/miti99/caro/common/entity/Board.java` | Game board state + validation |
+| `server/src/main/java/com/miti99/caro/common/helper/GomokuHelper.java` | Win detection algorithm |
+| `server/src/main/java/com/miti99/caro/common/robot/GomokuAI.java` | AI move selection (3 difficulties) |
+| `server/src/main/java/com/miti99/caro/common/entity/Room.java` | Game room state container |
+| `server/src/main/java/com/miti99/caro/common/entity/Msg.java` | WebSocket JSON envelope (record) |
+| `server/src/main/java/com/miti99/caro/server/event/ServerEventListener_*.java` | Event handlers (game logic) |
+| `server/src/main/java/com/miti99/caro/server/handler/WebsocketTransferHandler.java` | WS codec |
+| `client/src/scenes/game-scene.js` | Client main gameplay scene |
+| `client/src/services/connection-service.js` | WebSocket client |
+| `client/src/config/protocol-constants.js` | Event code enums |
 
 ---
 
 ## Future Architectural Improvements
 
-1. **Database integration** — Persist games, leaderboards, accounts
-2. **Message broker (Kafka/RabbitMQ)** — Decouple game logic from network I/O
-3. **Microservices** — Separate room manager, AI service, auth service
-4. **Load balancing** — Multiple server instances with session affinity
-5. **Spectator streaming** — Publish game state to viewers without load
-6. **Replay system** — Record move history, allow playback
-7. **Mobile app** — Native iOS/Android clients instead of web-only
+1. **Proto-over-WebSocket** — migrate WS payloads from JSON to Protobuf (the `.proto` files are already staged under `server/src/main/resources/proto/`).
+2. **Database integration** — Persist games, leaderboards, accounts.
+3. **Virtual threads** — Java 25 has mature virtual-thread support; some blocking code paths (e.g. AI hard-depth search) could be offloaded.
+4. **Message broker (Kafka/RabbitMQ)** — Decouple game logic from network I/O.
+5. **Microservices** — Separate room manager, AI service, auth service.
+6. **Load balancing** — Multiple server instances with session affinity.
+7. **Replay system** — Record move history, allow playback.
+8. **Mobile app** — Native iOS/Android clients alongside web.

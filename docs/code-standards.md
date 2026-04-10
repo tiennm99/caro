@@ -19,14 +19,16 @@ All code must be:
 ### Package Naming
 
 ```
-org.nico.ratel.landlords.{component}.{subcomponent}
+com.miti99.caro.{common|server}.{subcomponent}
 ```
 
 **Examples:**
-- `org.nico.ratel.landlords.entity` — Data models
-- `org.nico.ratel.landlords.helper` — Game logic & utilities
-- `org.nico.ratel.landlords.server.event` — Server event handlers
-- `org.nico.ratel.landlords.client.proxy` — Client network layer
+- `com.miti99.caro.common.entity` — Shared data models
+- `com.miti99.caro.common.helper` — Game logic & utilities
+- `com.miti99.caro.common.robot` — AI engine
+- `com.miti99.caro.server.event` — Server event handlers
+- `com.miti99.caro.server.handler` — Netty pipeline handlers
+- `com.miti99.caro.server.proxy` — TCP/WebSocket server bootstrap
 
 ### Class Naming
 
@@ -191,8 +193,8 @@ import java.util.List;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.FullHttpRequest;
 
-import org.nico.ratel.landlords.entity.Board;
-import org.nico.ratel.landlords.enums.PieceType;
+import com.miti99.caro.common.entity.Board;
+import com.miti99.caro.common.enums.PieceType;
 ```
 
 ### Error Handling
@@ -549,7 +551,7 @@ const piece = move.piece;
 
 | Item | Java | JavaScript |
 |------|------|-----------|
-| **Package/Module** | `org.nico.ratel.landlords.foo` | `foo-bar.js`, `/services/` |
+| **Package/Module** | `com.miti99.caro.{common,server}.foo` | `foo-bar.js`, `/services/` |
 | **Class** | `PascalCase` | `PascalCase` (exported) |
 | **Function** | `camelCase()` | `camelCase()` |
 | **Variable** | `camelCase` | `camelCase` |
@@ -757,9 +759,16 @@ If removing a feature:
 
 **Recommended Tools:**
 - **IDE:** IntelliJ IDEA (Java), VS Code (JavaScript)
-- **Java:** Maven 3.6+, Java 8+
-- **JavaScript:** Node.js 18+, Vite 6+
+- **Java:** Maven 3.9+, Java 25 (LTS) — uses `release 25`, records, switch expressions, `var`
+- **JavaScript:** Node.js 22+, Vite 6+
 - **Version Control:** Git
+
+**Java 25 modernization guidelines:**
+- Prefer `record` for immutable DTOs (e.g. wire-format envelopes like `Msg`)
+- Use `var` for local variables where the RHS type is obvious at a glance
+- Use switch expressions (`switch (...) { case X -> ...; }`) for pure mapping
+- Use text blocks (`"""..."""`) for multi-line strings
+- Test framework is JUnit 5 (`org.junit.jupiter.api`) — use `@Test`, `Assertions.*`
 
 **CI/CD:**
 - GitHub Actions runs on every push

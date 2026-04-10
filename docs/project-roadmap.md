@@ -4,8 +4,8 @@
 
 Caro (Gomoku) is a **completed multiplayer game** with all core features implemented and tested. This roadmap documents completed phases and future enhancement ideas.
 
-**Current Version:** 1.4.0  
-**Status:** Stable, actively maintained  
+**Current Version:** 0.0.1-beta
+**Status:** Stable, actively maintained
 **Last Updated:** 2026-04-10
 
 ---
@@ -24,10 +24,10 @@ Caro (Gomoku) is a **completed multiplayer game** with all core features impleme
 - Defined protocol: ServerEventCode (14 codes), ClientEventCode (24 codes)
 - Shared library with reusable entities (Board, Room, GameMove)
 
-**Key files:**
-- `landlords-common/entity/Board.java` — Board state & validation
-- `landlords-common/enums/` — Event and game state enums
-- `landlords-common/helper/GomokuHelper.java` — Win detection
+**Key files (post-refactor paths):**
+- `server/src/main/java/com/miti99/caro/common/entity/Board.java` — Board state & validation
+- `server/src/main/java/com/miti99/caro/common/enums/` — Event and game state enums
+- `server/src/main/java/com/miti99/caro/common/helper/GomokuHelper.java` — Win detection
 
 **Outcome:**
 - Working multiplayer server (Netty)
@@ -50,8 +50,7 @@ Caro (Gomoku) is a **completed multiplayer game** with all core features impleme
 - Fixed broken references in code
 
 **Key files modified:**
-- `landlords-server/event/ServerEventListener_*.java` — Simplified
-- `landlords-client/event/ClientEventListener_*.java` — Simplified
+- `com.miti99.caro.server.event.ServerEventListener_*.java` — Simplified
 - `README.md` — Updated with Gomoku features
 - Removed files: ~15 obsolete files
 
@@ -80,9 +79,9 @@ Caro (Gomoku) is a **completed multiplayer game** with all core features impleme
 - **AI Medium:** Validates find-win and block-opponent logic
 - **AI Hard:** Validates minimax scoring at depth 3
 
-**Key files:**
-- `landlords-common/src/test/java/helper/tests/GomokuHelperTest.java`
-- `landlords-common/src/test/java/robot/tests/GomokuAITest.java`
+**Key files (post-refactor paths):**
+- `server/src/test/java/com/miti99/caro/common/helper/tests/GomokuHelperTest.java` (JUnit 5)
+- `server/src/test/java/com/miti99/caro/common/robot/tests/GomokuAITest.java` (JUnit 5)
 
 **Outcome:**
 - Game logic is battle-tested
@@ -91,27 +90,17 @@ Caro (Gomoku) is a **completed multiplayer game** with all core features impleme
 
 ---
 
-### Phase 4: Built-in Web UI ✓ DONE
+### Phase 4: Built-in Web UI ✓ DONE (REMOVED in Phase 7)
 
-**Timeline:** 2026-Q1  
-**Status:** Complete
+**Timeline:** 2026-Q1
+**Status:** Historical — removed in the 2026-04-10 refactor (superseded by dedicated `client/`)
 
 **What was done:**
-- Created StaticFileHandler in Netty pipeline
-- Implemented HTTP file serving (port 1025)
+- Created `StaticFileHandler` in the Netty pipeline
+- Implemented HTTP file serving on port 1025
 - Created basic HTML/CSS/JS UI
-- Integrated with WebSocket protocol
-- MIME type mapping for assets (html, css, js, images, audio)
-- Path traversal security (prevents `../` attacks)
 
-**Key files:**
-- `landlords-server/handler/StaticFileHandler.java` — File serving
-- `landlords-server/resources/static/` — HTML, CSS, JS
-
-**Outcome:**
-- Players can access UI without separate deployment
-- Quick play: just run server JAR
-- Security: path traversal blocked
+**Removal rationale:** The dedicated Phaser 3 client (Phase 5) fully replaces the built-in UI. Keeping the static handler added code without value and increased attack surface.
 
 ---
 
@@ -140,11 +129,11 @@ Caro (Gomoku) is a **completed multiplayer game** with all core features impleme
 - **Spectator Mode:** Watch games without ability to move
 - **Connection Management:** Auto-reconnect, heartbeat (30s interval)
 
-**Key files:**
-- `web-client/src/scenes/game-scene.js` — Main gameplay
-- `web-client/src/objects/board.js` — Board renderer
-- `web-client/src/services/connection-service.js` — WebSocket client
-- `web-client/src/ui/game-ui.js` — HUD & notifications
+**Key files (post-refactor paths):**
+- `client/src/scenes/game-scene.js` — Main gameplay
+- `client/src/objects/board.js` — Board renderer
+- `client/src/services/connection-service.js` — WebSocket client
+- `client/src/ui/game-ui.js` — HUD & notifications
 
 **Outcome:**
 - Professional, polished game experience
@@ -162,13 +151,13 @@ Caro (Gomoku) is a **completed multiplayer game** with all core features impleme
 **What was done:**
 - Set up GitHub Actions Build pipeline
   - Triggers on every push
-  - Runs Maven build
+  - Runs Maven build (Java 25)
   - Executes all 37 tests
-  - Builds web-client with npm
-  
+  - Builds client with npm (Node 22)
+
 - Set up GitHub Actions Deploy pipeline
-  - Triggers on push to master
-  - Builds web-client
+  - Triggers on push to master when `client/**` changes
+  - Builds client
   - Auto-deploys to GitHub Pages
   - URL: `https://tiennm99.github.io/caro/`
 
@@ -178,9 +167,37 @@ Caro (Gomoku) is a **completed multiplayer game** with all core features impleme
 
 **Outcome:**
 - No manual deployment needed
-- Web client always up-to-date on master push
+- Client always up-to-date on master push
 - Tests must pass before merge
 - Zero-downtime rollback possible via tags
+
+---
+
+### Phase 7: Monorepo Refactor & Java 25 Modernization ✓ DONE
+
+**Timeline:** 2026-04-10
+**Status:** Complete
+
+**What was done:**
+- Deleted the Java CLI client (`landlords-client/`) and its supporting dead code (`I18nHelper`, `SimplePrinter.printTranslate`, `messages_en_US.properties`).
+- Deleted the legacy built-in static web UI (`StaticFileHandler`, `static/` resources).
+- Merged `landlords-common/` into `landlords-server/` (single Java module; sub-packages disjoint).
+- Moved `.proto` files from `protoc-resource/` into `server/src/main/resources/proto/` (for future proto-over-WS work).
+- Collapsed Maven: deleted the parent pom, rewrote `server/pom.xml` as standalone with `maven-shade-plugin` (3.6.0).
+- Upgraded to Java 25 LTS (`<release>25</release>`); new artifact coordinates `com.miti99.caro:caro-server:0.0.1-beta`.
+- Replaced `com.smallnico:noson` with `com.google.code.gson:gson` (2.11.0) across 7 call sites.
+- Migrated tests from JUnit 4 to JUnit 5 (`junit-jupiter` 5.11.3).
+- Renamed `landlords-server/` → `server/`; renamed `web-client/` → `client/`.
+- Renamed packages `org.nico.ratel.landlords.*` → `com.miti99.caro.{common,server}.*` across 58 Java files.
+- Applied opportunistic Java 25 modernization: `Msg` DTO → `record`, switch expressions in `GomokuHelper.getWinnerMessage` + `GomokuAI.getNextMove` + `ServerEventListener_CODE_ROOM_CREATE_PVE.getDifficultyName`, `var` in `ChannelUtils` and `WebsocketTransferHandler`.
+- Updated `docker-compose.yml` (service + container rename), both GitHub Actions workflows (Java 25, new paths), and `client/package.json` (name + version).
+- Rewrote `README.md` + all 6 docs in `./docs/` for the new structure.
+
+**Outcome:**
+- Cleaner monorepo: two top-level directories (`server/`, `client/`).
+- Drastically smaller Maven surface: one standalone module, no Spring parent, explicit dep versions.
+- Modern Java 25 LTS runtime with records + switch expressions where they add clarity.
+- All 37 tests pass under JUnit 5 on Java 25.
 
 ---
 
@@ -196,17 +213,15 @@ Caro (Gomoku) is a **completed multiplayer game** with all core features impleme
 - ✓ Rematch/reset functionality
 
 ### Network Features
-- ✓ TCP/Protobuf protocol (CLI clients)
-- ✓ WebSocket/JSON protocol (web clients)
+- ✓ TCP/Protobuf protocol
+- ✓ WebSocket/JSON protocol (gson)
 - ✓ Dual protocol simultaneous support
 - ✓ Connection heartbeat (keep-alive)
 - ✓ Auto-reconnect with exponential backoff
 - ✓ Graceful disconnection handling
 
 ### UI Features
-- ✓ Web client (Phaser 3, professional UI)
-- ✓ CLI client (terminal-based)
-- ✓ Built-in web UI (static HTML, served by server)
+- ✓ Client (Phaser 3, professional UI)
 - ✓ Responsive design (desktop + tablet)
 - ✓ Sound effects
 - ✓ Move animations
@@ -214,11 +229,11 @@ Caro (Gomoku) is a **completed multiplayer game** with all core features impleme
 - ✓ Game over notifications
 
 ### Infrastructure
-- ✓ Maven build (Java)
-- ✓ Vite build (JavaScript)
+- ✓ Maven build (Java 25)
+- ✓ Vite build (Node 22)
 - ✓ GitHub Actions CI/CD
-- ✓ Unit tests (37 tests, 100% game logic coverage)
-- ✓ Docker-ready (single JAR)
+- ✓ Unit tests (37 tests, JUnit 5, ~100% game logic coverage)
+- ✓ Docker Compose (two services: server + client)
 - ✓ Cross-platform (Windows, macOS, Linux)
 
 ---
@@ -356,10 +371,10 @@ Caro (Gomoku) is a **completed multiplayer game** with all core features impleme
 ## Maintenance & Support Schedule
 
 ### Regular (Every Release)
-- Run all 37 tests
-- Build JAR + web client
-- Deploy to GitHub Pages
-- Update version in pom.xml + package.json
+- Run all 37 tests (`mvn -f server/pom.xml clean verify`)
+- Build jar + client (`mvn package` / `npm run build`)
+- Deploy to GitHub Pages (auto on master push)
+- Update version in `server/pom.xml` + `client/package.json`
 
 ### Quarterly
 - Check Maven dependency updates
@@ -378,11 +393,14 @@ Caro (Gomoku) is a **completed multiplayer game** with all core features impleme
 
 | Version | Date | Major Changes |
 |---------|------|---------------|
-| **1.4.0** | 2026-Q2 | Phaser 3 client, CI/CD, polished |
-| **1.3.0** | 2026-Q1 | Built-in web UI, comprehensive tests |
+| **0.0.1-beta** | 2026-04-10 | Monorepo refactor: server/ + client/, Java 25, gson, JUnit 5, shade, com.miti99.caro.* |
+| **1.4.0** | 2026-Q2 | Phaser 3 client, CI/CD, polished (pre-refactor) |
+| **1.3.0** | 2026-Q1 | Built-in web UI (since removed), comprehensive tests |
 | **1.2.0** | 2026-Q1 | Code cleanup, remove dead code |
 | **1.1.0** | 2025-Q4 | Gomoku conversion, multiplayer working |
 | **1.0.0** | 2025-Q4 | Initial release (ratel base) |
+
+Note: `0.0.1-beta` is a deliberate version reset to signal the refactor's scope and to start a new semver lineage under `com.miti99.caro`.
 
 ---
 
@@ -420,10 +438,10 @@ Caro (Gomoku) is a **completed multiplayer game** with all core features impleme
 
 ## Decision Log
 
-### Decision 1: Java 8 Source/Target (2025-Q4)
-**Why:** Compatibility with older systems, widespread JVM support  
-**Alternative:** Java 11 (more modern, but drops older systems)  
-**Impact:** Works on Java 8+ (no newer language features needed)
+### Decision 1: Java 25 LTS Source/Target (2026-04-10, supersedes Java 8 choice)
+**Why:** Modern LTS with records, switch expressions, pattern matching, virtual threads (reserved for future use). Aligns with Docker base image.
+**Alternative:** Stay on Java 8 / 11 / 17 / 21
+**Impact:** Requires Java 25 JDK to build; runtime needs Java 25. Enables cleaner code (records, switch expressions, `var`).
 
 ### Decision 2: Netty for Server (2025-Q4)
 **Why:** Async, low-latency, battle-tested for game servers  

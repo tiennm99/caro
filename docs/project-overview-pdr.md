@@ -4,13 +4,12 @@
 
 Caro (also known as Gomoku or Five-in-a-Row) is a classic strategy board game. This project implements a **multiplayer online version** with:
 - Professional 2D game UI (browser-based)
-- Terminal client for lightweight play
 - Real-time server synchronization
 - AI opponents at multiple difficulty levels
 - Spectator mode to watch ongoing games
 
-**Version:** 1.4.0  
-**License:** Apache 2.0  
+**Version:** 0.0.1-beta
+**License:** Apache 2.0
 **Base:** Converted from [ainilili/ratel](https://github.com/ainilili/ratel) (Landlords card game framework)
 
 ---
@@ -35,14 +34,12 @@ Caro (also known as Gomoku or Five-in-a-Row) is a classic strategy board game. T
 - Useful for learning strategies
 
 ### Game UI
-- **Web Client (Phaser 3):** 800x800 board with wood texture, stone animations, sound effects, move history panel
-- **CLI Client:** Terminal-based player, keyboard input for moves
-- **Built-in Web UI:** Static HTML served from server for quick play
+- **Client (Phaser 3):** 800x800 board with wood texture, stone animations, sound effects, move history panel
 
 ### Cross-Protocol Support
-- **TCP/Protobuf:** For CLI clients, lower latency
-- **WebSocket/JSON:** For web clients, easier browser integration
-- Both run simultaneously on different ports
+- **TCP/Protobuf:** lower latency, binary protocol
+- **WebSocket/JSON:** easier browser integration
+- Both run simultaneously on different ports (`1024` TCP, `1025` WebSocket by default)
 
 ---
 
@@ -74,13 +71,12 @@ Caro (also known as Gomoku or Five-in-a-Row) is a classic strategy board game. T
 
 | Component | Technology | Details |
 |-----------|-----------|---------|
-| **Server** | Java 8 + Netty | Asynchronous, event-driven, low-latency |
-| **Network Protocol** | Protobuf (TCP) + JSON (WebSocket) | Dual protocol, language-agnostic |
-| **Game Logic** | Pure Java | Board state, move validation, win detection, AI |
-| **Web Client** | Phaser 3 + Vite + Vanilla JS | No framework dependencies (besides Phaser) |
-| **CLI Client** | Java + Scanner | Lightweight, no external libs |
-| **Build** | Maven (Java) + npm/Vite (JS) | Standard tooling, easy CI/CD integration |
-| **Deployment** | Docker-friendly | Single JAR server, static web client |
+| **Server** | Java 25 + Netty 4.1 | Asynchronous, event-driven, low-latency |
+| **Network Protocol** | Protobuf (TCP) + JSON/gson (WebSocket) | Dual protocol, language-agnostic |
+| **Game Logic** | Pure Java 25 (records, switch expressions) | Board state, move validation, win detection, AI |
+| **Client** | Phaser 3 + Vite + Vanilla JS | No framework dependencies (besides Phaser) |
+| **Build** | Maven 3.9 + maven-shade-plugin / Vite | Standalone server jar + static client bundle |
+| **Deployment** | Docker Compose | Two services: `server` + `client` |
 
 ---
 
@@ -91,10 +87,8 @@ Caro (also known as Gomoku or Five-in-a-Row) is a classic strategy board game. T
 | PVP Multiplayer | DONE | Full room/lobby management |
 | PVE AI (3 difficulties) | DONE | Random, heuristic, minimax |
 | Spectator Mode | DONE | Real-time game observation |
-| Web Client (Phaser 3) | DONE | Full-featured, polished UI |
-| CLI Client | DONE | Terminal-based gameplay |
-| Built-in Web UI | DONE | Static HTML served by server |
-| Sound Effects | DONE | Web Audio API (web client) |
+| Client (Phaser 3) | DONE | Full-featured, polished UI |
+| Sound Effects | DONE | Web Audio API (client) |
 | Move Animations | DONE | Phaser physics + tweens |
 | Game Replay | NOT IMPLEMENTED | Could store move history |
 | Chat During Games | NOT IMPLEMENTED | Messaging layer separate from game |
@@ -145,25 +139,17 @@ Caro (also known as Gomoku or Five-in-a-Row) is a classic strategy board game. T
 ```
 ┌─────────────────┐         ┌─────────────────────┐
 │  Web Browser    │◄───────►│  Phaser 3 Client    │
-│  (http://...)   │ WS/JSON │  (Vite + JS)        │
+│  (http://...)   │ WS/JSON │  (Vite + JS, :8080) │
 └─────────────────┘         └─────────────────────┘
-        ▲
-        │ HTTP (static files)
-        │
-┌───────┴─────────────────────────────────────────────┐
-│  Java Netty Server (TCP + WebSocket)                │
-│  ├─ StaticFileHandler  (serve index.html, CSS, JS)  │
+                                      │
+                                      │ WebSocket :1025/ratel
+                                      ▼
+┌─────────────────────────────────────────────────────┐
+│  Java 25 Netty Server (com.miti99.caro.server)      │
 │  ├─ WebsocketTransferHandler (WS → game events)     │
 │  ├─ ProtobufTransferHandler  (TCP → game events)    │
-│  └─ ServerEventListener_* (process moves, AI)       │
-└───────┬─────────────────────────────────────────────┘
-        │
-    TCP │ Protobuf
-        │
-┌─────────────────┐
-│  CLI Client     │
-│  (Java console) │
-└─────────────────┘
+│  └─ ServerEventListener_*    (process moves, AI)    │
+└─────────────────────────────────────────────────────┘
 ```
 
 ---
@@ -173,29 +159,31 @@ Caro (also known as Gomoku or Five-in-a-Row) is a classic strategy board game. T
 | Phase | Status | Description |
 |-------|--------|-------------|
 | **Phase 1** | DONE | Convert ratel (Landlords) → Gomoku game logic |
-| **Phase 2** | DONE | Clean server/client code, modernize Java |
-| **Phase 3** | DONE | Write comprehensive tests (37 tests) |
-| **Phase 4** | DONE | Add built-in web UI (StaticFileHandler) |
-| **Phase 5** | DONE | Create Phaser 3 web client with Vite |
-| **Phase 6** | DONE | Modernize CI/CD, auto-deploy to GitHub Pages |
-| **Future** | IDEAS | Chat, accounts, leaderboards, better AI, mobile |
+| **Phase 2** | DONE | Clean server/client code, write comprehensive tests (37 tests) |
+| **Phase 3** | DONE | Create Phaser 3 client with Vite |
+| **Phase 4** | DONE | Modernize CI/CD, auto-deploy to GitHub Pages |
+| **Phase 5** | DONE | Refactor to standalone server/client monorepo, Java 25, gson, JUnit 5, package rename com.miti99.caro (2026-04-10) |
+| **Future** | IDEAS | Chat, accounts, leaderboards, better AI, proto-over-WS, mobile |
 
 ---
 
 ## Getting Started
 
-### Quick Start (Browser)
+### Quick Start (Docker Compose)
 ```bash
 git clone https://github.com/tiennm99/caro.git
 cd caro
-mvn clean package -DskipTests
-java -jar landlords-server/target/landlords-server-1.4.0.jar -p 1024
-# Open http://localhost:1025 or http://localhost:5173 (after npm run dev in web-client/)
+docker compose up --build -d
+# Open http://localhost:8080
 ```
 
-### Quick Start (CLI)
+### Quick Start (Local)
 ```bash
-java -jar landlords-client/target/landlords-client-1.4.0.jar -h 127.0.0.1 -p 1024
+mvn -f server/pom.xml clean package -DskipTests
+java -jar server/target/caro-server-0.0.1-beta.jar -p 1024
+# In another terminal:
+cd client && npm install && npm run dev
+# Open http://localhost:5173
 ```
 
 See `deployment-guide.md` for detailed setup instructions.
@@ -214,13 +202,16 @@ See `deployment-guide.md` for detailed setup instructions.
 
 | Dependency | Version | Purpose |
 |-----------|---------|---------|
-| Java | 8+ | Language runtime |
-| Netty | Latest (pom.xml) | Async networking |
-| Protobuf | 3.25.5 | Binary serialization |
+| Java | 25 (LTS) | Language runtime |
+| Netty | 4.1.115.Final | Async networking |
+| Protobuf | 3.25.5 | Binary serialization (TCP wire) |
+| gson | 2.11.0 | JSON serialization (WS wire) |
+| JUnit Jupiter | 5.11.3 | Test framework |
+| maven-shade-plugin | 3.6.0 | Fat jar packaging |
 | Phaser | 3.87.0 | Web game engine |
 | Vite | 6.3.1 | Web bundler |
-| Maven | 3.6+ | Java build tool |
-| Node.js | 18+ | Web dev tooling |
+| Maven | 3.9+ | Java build tool |
+| Node.js | 22+ | Client dev tooling |
 
 ---
 

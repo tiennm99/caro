@@ -1,8 +1,8 @@
 # Caro (Gomoku)
 
-A multiplayer Gomoku (Five-in-a-Row) game with client-server architecture. Play in the browser or from the command line.
+A multiplayer Gomoku (Five-in-a-Row) game with client-server architecture. Play in the browser against other players or an AI.
 
-Built on [Netty](https://netty.io/) (server) and [Phaser 3](https://phaser.io/) (web client).
+Built on [Netty](https://netty.io/) (server) and [Phaser 3](https://phaser.io/) (client).
 
 ## Features
 
@@ -10,50 +10,47 @@ Built on [Netty](https://netty.io/) (server) and [Phaser 3](https://phaser.io/) 
 - **Player vs Player (PVP)** — create or join rooms, play against others online
 - **Player vs AI (PVE)** — three difficulty levels (Easy, Medium, Hard)
 - **Spectator mode** — watch ongoing games in real-time
-- **Web client** — professional 2D game UI with canvas board, stone animations, sound effects
-- **CLI client** — terminal-based client for lightweight play
+- **Phaser web client** — professional 2D game UI with canvas board, stone animations, sound effects
 - **WebSocket + TCP** — dual protocol support
 
 ## Prerequisites
 
-- **Java 8+** and **Maven** — for the server and CLI client
-- **Node.js 18+** — for the web client (development only)
+- **Java 25** and **Maven 3.9+** — for building the server
+- **Node.js 22+** — for the client (development only)
+- **Docker + Docker Compose** — optional, for containerized deployment
 
-## Quick Start
-
-### 1. Build the server
+## Quick Start (Docker Compose)
 
 ```bash
 git clone https://github.com/tiennm99/caro.git
 cd caro
-mvn clean package -DskipTests
+docker compose up -d
 ```
 
-### 2. Start the server
+Then open `http://localhost:8080/` in your browser. The server listens on ports `1024` (TCP) and `1025` (WebSocket); the client is served at `8080`.
+
+## Quick Start (Local)
+
+### 1. Build and run the server
 
 ```bash
-java -jar landlords-server/target/landlords-server-1.4.0.jar -p 1024
+mvn -f server/pom.xml clean package
+java -jar server/target/caro-server-0.0.1-beta.jar -p 1024
 ```
 
 The server starts two listeners:
-- **TCP** on port `1024` (for CLI clients)
-- **WebSocket** on port `1025` (for web clients and the built-in web UI)
+- **TCP** on port `1024` (Protobuf)
+- **WebSocket** on port `1025` (JSON)
 
-### 3. Play in the browser (Web Client)
-
-#### Option A: Built-in web UI
-
-Open `http://localhost:1025/` in your browser. The server serves a basic web UI directly.
-
-#### Option B: Phaser web client (recommended)
+### 2. Run the client (Vite dev server)
 
 ```bash
-cd web-client
+cd client
 npm install
 npm run dev
 ```
 
-Open `http://localhost:5173` in your browser. This is the full-featured Phaser 3 game client with:
+Open `http://localhost:5173` in your browser. Features:
 - Wood-textured board with gradient stones
 - Stone placement animations and hover preview
 - Move history panel and turn indicator
@@ -61,14 +58,6 @@ Open `http://localhost:5173` in your browser. This is the full-featured Phaser 3
 - Lobby with room management
 
 To play multiplayer, open two browser tabs.
-
-### 4. Play from the terminal (CLI Client)
-
-```bash
-java -jar landlords-client/target/landlords-client-1.4.0.jar -h 127.0.0.1 -p 1024
-```
-
-Enter moves as `row,col` (e.g. `7,7` for the center of the board). Type `exit` or `e` to leave.
 
 ## Game Rules
 
@@ -81,26 +70,24 @@ Enter moves as `row,col` (e.g. `7,7` for the center of the board). Type `exit` o
 
 ```
 caro/
-  landlords-common/    Java shared library (game logic, entities, protocol)
-  landlords-server/    Java Netty server (TCP + WebSocket)
-  landlords-client/    Java CLI client
-  web-client/          Phaser 3 web client (Vite + vanilla JS)
+  server/     Standalone Netty server (Java 25, Maven, com.miti99.caro.{common,server})
+  client/     Phaser 3 web client (Vite + vanilla JS)
+  docs/       Project documentation
 ```
 
 ### Server Architecture
 
 ```
-Client (browser/CLI)
+Client (browser)
   |
-  +-- TCP  :1024  -->  ProtobufTransferHandler  -->  ServerEventListener_*
-  +-- WS   :1025  -->  WebsocketTransferHandler -->  ServerEventListener_*
-  +-- HTTP :1025  -->  StaticFileHandler         -->  static files
+  +-- TCP  :1024  -->  ProtobufTransferHandler   -->  ServerEventListener_*
+  +-- WS   :1025  -->  WebsocketTransferHandler  -->  ServerEventListener_*
 ```
 
-### Web Client Architecture
+### Client Architecture
 
 ```
-web-client/src/
+client/src/
   main.js                    Phaser game boot
   config/
     game-config.js           Phaser config (800x800, Scale.FIT)
@@ -127,21 +114,12 @@ web-client/src/
 -p, -port    TCP port (default: 1024, WebSocket = TCP + 1)
 ```
 
-## CLI Client Options
-
-```
--h, -host       Server address (required)
--p, -port       Server TCP port (default: 1024)
--ptl, -protocol Protocol: "pb" (TCP/Protobuf) or "ws" (WebSocket)
--lang           Language: "en" / "en_US"
-```
-
-## Web Client Scripts
+## Client Scripts
 
 ```bash
-cd web-client
+cd client
 npm run dev      # Start Vite dev server (port 5173)
-npm run build    # Production build to web-client/dist/
+npm run build    # Production build to client/dist/
 npm run preview  # Preview production build
 ```
 
