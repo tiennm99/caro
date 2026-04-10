@@ -61,7 +61,7 @@ caro/
 │   ├── Dockerfile                       Nginx-based static server
 │   ├── index.html
 │   ├── vite.config.js
-│   └── package.json                     caro-client 0.0.1-beta
+│   └── package.json                     caro-client 0.0.1
 ├── docs/                                (this directory)
 │   ├── project-overview.md
 │   ├── system-architecture.md
@@ -177,7 +177,7 @@ caro/
 - `server/gradle/wrapper/` — committed wrapper (Gradle 9.2.1)
 - `server/gradlew` / `server/gradlew.bat` — wrapper launchers
 
-**Coordinates:** `com.miti99.caro:caro-server:0.0.1-beta`
+**Coordinates:** `com.miti99.caro:caro-server:0.0.1`
 
 **Plugins:**
 - `java` — standard Java plugin
@@ -200,14 +200,14 @@ caro/
 **Build Command:**
 ```bash
 ./server/gradlew -p server clean build
-# Produces: server/build/libs/caro-server-0.0.1-beta.jar (shaded fat jar)
+# Produces: server/build/libs/caro-server-0.0.1.jar (shaded fat jar)
 ```
 
 ### Vite (JavaScript)
 
 **File:** `client/package.json`
 
-**Package:** `caro-client` 0.0.1-beta
+**Package:** `caro-client` 0.0.1
 
 **Scripts:**
 - `npm run dev` — Dev server (port 5173, hot reload)
@@ -293,7 +293,7 @@ caro/
 
 | Artifact | Location | Purpose |
 |----------|----------|---------|
-| Server jar | `server/build/libs/caro-server-0.0.1-beta.jar` | Shaded executable fat jar |
+| Server jar | `server/build/libs/caro-server-0.0.1.jar` | Shaded executable fat jar |
 | Client dist | `client/dist/` | Static files for web UI |
 
 ---
@@ -314,6 +314,6 @@ Deployment is handled via Docker Compose from this repo; there is no hosted depl
 
 ## Version & Release
 
-**Current Version:** 0.0.1-beta (both `caro-server` and `caro-client`)
+**Current Version:** 0.0.1 (both `caro-server` and `caro-client`)
 
-**Versioning:** Semantic versioning (MAJOR.MINOR.PATCH) with `-beta` suffix during pre-1.0.
+**Versioning:** Semantic versioning (MAJOR.MINOR.PATCH).

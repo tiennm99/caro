@@ -280,7 +280,7 @@ The pipeline has no static file handler. Non-WS HTTP requests to port 1025 retur
 The project is a **single standalone Gradle project** (`server/`) plus a **Node project** (`client/`):
 
 ```
-server/ (standalone: com.miti99.caro:caro-server:0.0.1-beta)
+server/ (standalone: com.miti99.caro:caro-server:0.0.1)
 ├── common/  (shared entities, enums, game logic, utils)
 │   ├── Netty (runtime transitive)
 │   ├── Protobuf 3.25.5

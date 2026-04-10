@@ -35,7 +35,7 @@ Then open `http://localhost:8080/` in your browser. The server listens on ports 
 
 ```bash
 ./server/gradlew -p server clean build
-java -jar server/build/libs/caro-server-0.0.1-beta.jar -p 1024
+java -jar server/build/libs/caro-server-0.0.1.jar -p 1024
 ```
 
 On Windows use `server\gradlew.bat` instead of `./server/gradlew`.
@@ -141,7 +141,7 @@ This project is based on [Ratel](https://github.com/ainilili/ratel) by [ainilili
 - **Original project**: [ainilili/ratel](https://github.com/ainilili/ratel) — Netty-based multiplayer game framework
 - **Networking**: [Netty](https://netty.io/) — asynchronous event-driven network framework
 - **Web game engine**: [Phaser 3](https://phaser.io/) — HTML5 game framework
-- **Frontend build tool**: [Vite](https://vite.dev/) — next-generation frontend tooling
+- **Client build tool**: [Vite](https://vite.dev/) — next-generation client tooling
 - **Server build tool**: [Gradle](https://gradle.org/) with [Shadow plugin](https://gradleup.com/shadow/) for fat jars
 
 ## License

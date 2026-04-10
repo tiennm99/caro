@@ -4,7 +4,7 @@ plugins {
 }
 
 group = "com.miti99.caro"
-version = "0.0.1-beta"
+version = "0.0.1"
 description = "Caro (Gomoku) multiplayer game server - Netty-based TCP + WebSocket"
 
 java {

@@ -19,7 +19,7 @@ RUN server/gradlew -p server --no-daemon clean shadowJar
 FROM eclipse-temurin:25-jre-alpine
 WORKDIR /app
 
-COPY --from=build /build/server/build/libs/caro-server-0.0.1-beta.jar app.jar
+COPY --from=build /build/server/build/libs/caro-server-0.0.1.jar app.jar
 
 # TCP (protobuf) and WebSocket ports
 EXPOSE 1024 1025

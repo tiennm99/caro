@@ -67,7 +67,7 @@ cd caro
 On Windows: `server\gradlew.bat -p server clean build`.
 
 Output:
-- `server/build/libs/caro-server-0.0.1-beta.jar` — shaded fat jar (~20 MB)
+- `server/build/libs/caro-server-0.0.1.jar` — shaded fat jar (~20 MB)
 
 Skip tests:
 ```bash
@@ -84,7 +84,7 @@ Tests: 29 GomokuHelperTest + 8 GomokuAITest (JUnit 5). All must pass.
 ### 3. Run the Server
 
 ```bash
-java -jar server/build/libs/caro-server-0.0.1-beta.jar -p 1024
+java -jar server/build/libs/caro-server-0.0.1.jar -p 1024
 ```
 
 Output:
@@ -124,7 +124,7 @@ Open `http://localhost:5173/` — Phaser 3 client with full game UI.
 ### Option A: Standalone JAR
 
 ```bash
-java -jar caro-server-0.0.1-beta.jar -p 1024
+java -jar caro-server-0.0.1.jar -p 1024
 ```
 
 For production:
@@ -150,7 +150,7 @@ The included `server/Dockerfile` is multi-stage:
 
 Build from repo root (context = `.`):
 ```bash
-docker build -f server/Dockerfile -t caro-server:0.0.1-beta .
+docker build -f server/Dockerfile -t caro-server:0.0.1 .
 ```
 
 Run:
@@ -158,7 +158,7 @@ Run:
 docker run -d --name caro-server \
   -p 1024:1024/tcp \
   -p 1025:1025/tcp \
-  caro-server:0.0.1-beta
+  caro-server:0.0.1
 ```
 
 ### Option C: Linux Systemd Service
@@ -174,7 +174,7 @@ After=network.target
 Type=simple
 User=gameserver
 WorkingDirectory=/opt/caro
-ExecStart=/usr/bin/java -jar /opt/caro/caro-server-0.0.1-beta.jar -p 1024
+ExecStart=/usr/bin/java -jar /opt/caro/caro-server-0.0.1.jar -p 1024
 Restart=on-failure
 RestartSec=10
 StandardOutput=journal
@@ -268,7 +268,7 @@ sudo systemctl restart nginx
 ### Server Options
 
 ```bash
-java -jar caro-server-0.0.1-beta.jar [OPTIONS]
+java -jar caro-server-0.0.1.jar [OPTIONS]
 ```
 
 Available options:
@@ -279,8 +279,8 @@ Available options:
 
 Examples:
 ```bash
-java -jar caro-server-0.0.1-beta.jar -p 1024    # TCP:1024, WS:1025
-java -jar caro-server-0.0.1-beta.jar -p 8080    # TCP:8080, WS:8081
+java -jar caro-server-0.0.1.jar -p 1024    # TCP:1024, WS:1025
+java -jar caro-server-0.0.1.jar -p 8080    # TCP:8080, WS:8081
 ```
 
 ### Client Configuration
@@ -317,7 +317,7 @@ Test report: `server/build/reports/tests/test/index.html`
 ### Client Tests
 
 No automated tests currently. Manual testing:
-1. Start server: `java -jar server/target/caro-server-0.0.1-beta.jar`
+1. Start server: `java -jar server/build/libs/caro-server-0.0.1.jar`
 2. Start client: `cd client && npm run dev`
 3. Open `http://localhost:5173`
 4. Create game, make moves, test AI, spectate
@@ -359,7 +359,7 @@ netstat -an | grep -c ESTABLISHED
 Restart:
 ```bash
 kill $(pgrep -f caro-server)
-java -jar server/target/caro-server-0.0.1-beta.jar -p 1024
+java -jar server/build/libs/caro-server-0.0.1.jar -p 1024
 ```
 
 ---
@@ -372,7 +372,7 @@ java -jar server/target/caro-server-0.0.1-beta.jar -p 1024
 lsof -i :1024
 kill -9 <PID>
 # Or use a different port
-java -jar caro-server-0.0.1-beta.jar -p 9090
+java -jar caro-server-0.0.1.jar -p 9090
 ```
 
 ### Connection Refused
@@ -395,7 +395,7 @@ java -jar caro-server-0.0.1-beta.jar -p 9090
 netstat -an | grep ESTABLISHED | wc -l
 
 # Increase JVM heap
-java -Xmx2g -jar caro-server-0.0.1-beta.jar -p 1024
+java -Xmx2g -jar caro-server-0.0.1.jar -p 1024
 
 # Restart to reclaim memory
 ```
@@ -425,7 +425,7 @@ Before going live:
 1. Back up current jar
 2. Pull + rebuild: `git pull && ./server/gradlew -p server clean build`
 3. Stop: `kill $(pgrep -f caro-server)`
-4. Start new jar: `java -jar server/build/libs/caro-server-0.0.1-beta.jar -p 1024`
+4. Start new jar: `java -jar server/build/libs/caro-server-0.0.1.jar -p 1024`
 
 ### Update Client
 
@@ -447,7 +447,7 @@ Before going live:
 For production servers with 4+ GB RAM:
 
 ```bash
-java -Xmx4g -XX:+UseG1GC -jar caro-server-0.0.1-beta.jar -p 1024
+java -Xmx4g -XX:+UseG1GC -jar caro-server-0.0.1.jar -p 1024
 ```
 
 Java 25 defaults are already sensible; tune only if needed.

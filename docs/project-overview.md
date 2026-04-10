@@ -8,7 +8,7 @@ Caro (also known as Gomoku or Five-in-a-Row) is a classic strategy board game. T
 - AI opponents at multiple difficulty levels
 - Spectator mode to watch ongoing games
 
-**Version:** 0.0.1-beta
+**Version:** 0.0.1
 **License:** Apache 2.0
 **Base:** Converted from [ainilili/ratel](https://github.com/ainilili/ratel) (Landlords card game framework)
 
@@ -167,7 +167,7 @@ docker compose up --build -d
 ### Quick Start (Local)
 ```bash
 ./server/gradlew -p server build -x test
-java -jar server/build/libs/caro-server-0.0.1-beta.jar -p 1024
+java -jar server/build/libs/caro-server-0.0.1.jar -p 1024
 # In another terminal:
 npm --prefix client install
 npm --prefix client run dev
