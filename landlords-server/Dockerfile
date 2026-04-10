@@ -2,15 +2,12 @@
 FROM maven:3.9-eclipse-temurin-21 AS build
 WORKDIR /build
 
-# Copy parent pom and all module poms first for dependency caching
+# Copy parent pom and server module pom first for dependency caching
 COPY pom.xml .
-COPY landlords-common/pom.xml landlords-common/
 COPY landlords-server/pom.xml landlords-server/
 
-# Copy sources (common + server)
-COPY landlords-common/src landlords-common/src
+# Copy sources
 COPY landlords-server/src landlords-server/src
-COPY protoc-resource protoc-resource
 
 RUN mvn -B -pl landlords-server -am clean package -DskipTests
 

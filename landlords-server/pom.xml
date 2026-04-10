@@ -17,11 +17,6 @@
 	</properties>
 
 	<dependencies>
-		<dependency>
-			<groupId>com.smallnico.ratel</groupId>
-			<artifactId>landlords-common</artifactId>
-			<version>1.4.0</version>
-		</dependency>
 	</dependencies>
 
 	<build>

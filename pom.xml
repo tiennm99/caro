@@ -94,7 +94,6 @@
 
 	<modules>
 		<module>landlords-server</module>
-		<module>landlords-common</module>
 	</modules>
 
 
