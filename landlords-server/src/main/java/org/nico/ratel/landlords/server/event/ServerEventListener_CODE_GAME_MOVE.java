@@ -122,10 +122,14 @@ public class ServerEventListener_CODE_GAME_MOVE implements ServerEventListener {
 			winnerNickname = winner != null ? winner.getNickname() : "White";
 		}
 
+		// NOTE: do not include the formatted board here — it contains literal
+		// newlines which break the client's nested JSON.parse, leaving `data`
+		// as a raw string so data.result becomes undefined and the client
+		// always shows "You Lose!". The web client re-renders from its own
+		// move history and doesn't need a serialized board.
 		String gameOverData = MapHelper.newInstance()
 				.put("result", result.name())
 				.put("winnerNickname", winnerNickname)
-				.put("board", GomokuHelper.formatBoardForDisplay(room.getGameBoard()))
 				.json();
 		broadcastToRoom(room, ClientEventCode.CODE_GAME_OVER, gameOverData);
 	}
