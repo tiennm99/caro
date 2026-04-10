@@ -55,3 +55,6 @@ web-client/dist
 
 # Repomix output
 repomix-output.xml
+
+# Claude Code local overrides
+.claude/settings.local.json
