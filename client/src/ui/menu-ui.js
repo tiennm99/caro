@@ -181,6 +181,16 @@ eventBus.on(ClientEventCode.ROOM_CREATE_SUCCESS, (data) => {
 eventBus.on(ClientEventCode.CLIENT_EXIT, showLobby);
 eventBus.on(ClientEventCode.CLIENT_KICK, showLobby);
 
+// Spectator entry: server acknowledges with WatchGameSuccessResponse, then
+// immediately follows with a GameStartingResponse + replayed GameMoveSuccess
+// events. Flip the spectator flag here so the existing GAME_STARTING handlers
+// (menu-scene + game-state-service) transition to GameScene without allowing
+// click input. The replayed moves populate gameState.moves before GameScene
+// creates, so its create() path will render all existing stones.
+eventBus.on(ClientEventCode.GAME_WATCH_SUCCESSFUL, () => {
+  gameState.isSpectating = true;
+});
+
 // Server emits NICKNAME_SET with invalidLength=0 on first connect to prompt
 // the user, and with invalidLength>0 as a rejection when a nickname submission
 // fails length validation. Only treat nonzero invalidLength as an error.
