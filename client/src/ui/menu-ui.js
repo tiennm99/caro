@@ -6,7 +6,7 @@
 import { connectionService } from '../services/connection-service.js';
 import { eventBus } from '../services/event-bus.js';
 import { gameState } from '../services/game-state-service.js';
-import { ServerEventCode, ClientEventCode } from '../config/protocol-constants.js';
+import { ClientEventCode } from '../config/protocol-constants.js';
 import { showToast } from './game-ui.js';
 
 const overlay = () => document.getElementById('ui-overlay');
@@ -46,7 +46,7 @@ export function showNicknameScreen() {
     const name = input.value.trim();
     if (!name || name.length > 10) return;
     gameState.nickname = name;
-    connectionService.send(ServerEventCode.NICKNAME_SET, name);
+    connectionService.sendNickname(name);
   };
   btn.addEventListener('click', submit);
   input.addEventListener('keydown', (e) => { if (e.key === 'Enter') submit(); });
@@ -78,10 +78,10 @@ function showPvpMenu() {
     </div>
   `);
   document.getElementById('btn-create').addEventListener('click', () => {
-    connectionService.send(ServerEventCode.ROOM_CREATE, '');
+    connectionService.sendCreateRoom();
   });
   document.getElementById('btn-rooms').addEventListener('click', () => {
-    connectionService.send(ServerEventCode.GET_ROOMS, '');
+    connectionService.sendGetRooms();
   });
   document.getElementById('btn-back').addEventListener('click', showLobby);
 }
@@ -99,13 +99,13 @@ function showPveMenu() {
     </div>
   `);
   document.getElementById('btn-easy').addEventListener('click', () => {
-    connectionService.send(ServerEventCode.ROOM_CREATE_PVE, '1');
+    connectionService.sendCreatePveRoom(1);
   });
   document.getElementById('btn-medium').addEventListener('click', () => {
-    connectionService.send(ServerEventCode.ROOM_CREATE_PVE, '2');
+    connectionService.sendCreatePveRoom(2);
   });
   document.getElementById('btn-hard').addEventListener('click', () => {
-    connectionService.send(ServerEventCode.ROOM_CREATE_PVE, '3');
+    connectionService.sendCreatePveRoom(3);
   });
   document.getElementById('btn-back').addEventListener('click', showLobby);
 }
@@ -143,13 +143,13 @@ export function showRoomList(rooms) {
     </div>
   `);
   overlay().querySelectorAll('[data-join]').forEach(btn => {
-    btn.addEventListener('click', () => connectionService.send(ServerEventCode.ROOM_JOIN, btn.dataset.join));
+    btn.addEventListener('click', () => connectionService.sendJoinRoom(parseInt(btn.dataset.join, 10)));
   });
   overlay().querySelectorAll('[data-watch]').forEach(btn => {
-    btn.addEventListener('click', () => connectionService.send(ServerEventCode.GAME_WATCH, btn.dataset.watch));
+    btn.addEventListener('click', () => connectionService.sendWatchGame(parseInt(btn.dataset.watch, 10)));
   });
   document.getElementById('btn-refresh').addEventListener('click', () => {
-    connectionService.send(ServerEventCode.GET_ROOMS, '');
+    connectionService.sendGetRooms();
   });
   document.getElementById('btn-back').addEventListener('click', showPvpMenu);
 }
@@ -166,7 +166,7 @@ export function showWaitingRoom() {
     </div>
   `);
   document.getElementById('btn-leave').addEventListener('click', () => {
-    connectionService.send(ServerEventCode.CLIENT_EXIT, '');
+    connectionService.sendClientExit();
   });
 }
 
@@ -180,12 +180,13 @@ eventBus.on(ClientEventCode.ROOM_CREATE_SUCCESS, (data) => {
 eventBus.on(ClientEventCode.CLIENT_EXIT, showLobby);
 eventBus.on(ClientEventCode.CLIENT_KICK, showLobby);
 
-// Server emits NICKNAME_SET as rejection when the submitted nickname fails
-// length validation (payload: { invalidLength: N }). Surface it as a toast
-// and clear the optimistically-stored local nickname so we don't drift.
+// Server emits NICKNAME_SET with invalidLength=0 on first connect to prompt
+// the user, and with invalidLength>0 as a rejection when a nickname submission
+// fails length validation. Only treat nonzero invalidLength as an error.
 eventBus.on(ClientEventCode.NICKNAME_SET, (data) => {
-  if (data && typeof data === 'object' && 'invalidLength' in data) {
-    showToast(`Nickname must be 1–10 characters (got ${data.invalidLength})`, 'error');
+  const invalidLength = data && typeof data === 'object' ? (data.invalidLength || 0) : 0;
+  if (invalidLength > 0) {
+    showToast(`Nickname must be 1–10 characters (got ${invalidLength})`, 'error');
     gameState.nickname = '';
     showNicknameScreen();
   }

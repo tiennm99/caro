@@ -84,7 +84,7 @@ class GameStateService {
   /** @private */
   _registerHandlers() {
     eventBus.on(ClientEventCode.CLIENT_CONNECT, (data) => {
-      this.clientId = parseInt(data);
+      this.clientId = (data && typeof data === 'object') ? data.clientId : parseInt(data, 10);
     });
 
     eventBus.on(ClientEventCode.GAME_STARTING, (data) => {

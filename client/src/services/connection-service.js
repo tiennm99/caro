@@ -1,14 +1,42 @@
 /**
  * WebSocket connection service.
- * Wraps browser WebSocket with heartbeat, auto-reconnect, and message parsing.
+ * Wraps browser WebSocket with heartbeat, auto-reconnect, and typed protobuf
+ * Request/Response encoding on single port 1999.
  * @module connection-service
  */
 
 import { eventBus } from './event-bus.js';
-import { ServerEventCode } from '../config/protocol-constants.js';
+import { ClientEventCode } from '../config/protocol-constants.js';
+import { miti99 } from '../generated/protocol.js';
+
+const { Request, Response } = miti99.caro.protocol;
 
 /** Default server WebSocket URL */
-const DEFAULT_WS_URL = 'ws://localhost:1025/ratel';
+const DEFAULT_WS_URL = 'ws://localhost:1999/ratel';
+
+/** Maps a {@code Response.payload} oneof case name to a local event bus key. */
+const RESPONSE_CASE_TO_CLIENT_CODE = Object.freeze({
+  clientConnect: ClientEventCode.CLIENT_CONNECT,
+  nicknameSet: ClientEventCode.NICKNAME_SET,
+  showOptions: ClientEventCode.SHOW_OPTIONS,
+  showRooms: ClientEventCode.SHOW_ROOMS,
+  roomCreateSuccess: ClientEventCode.ROOM_CREATE_SUCCESS,
+  roomJoinSuccess: ClientEventCode.ROOM_JOIN_SUCCESS,
+  roomJoinFailFull: ClientEventCode.ROOM_JOIN_FAIL_FULL,
+  roomJoinFailNotFound: ClientEventCode.ROOM_JOIN_FAIL_INEXIST,
+  roomPlayFailNotFound: ClientEventCode.ROOM_PLAY_FAIL_INEXIST,
+  gameStarting: ClientEventCode.GAME_STARTING,
+  gameReady: ClientEventCode.GAME_READY,
+  gameMoveSuccess: ClientEventCode.GAME_MOVE_SUCCESS,
+  gameMoveInvalid: ClientEventCode.GAME_MOVE_INVALID,
+  gameMoveOccupied: ClientEventCode.GAME_MOVE_OCCUPIED,
+  gameMoveOutOfBounds: ClientEventCode.GAME_MOVE_OUT_OF_BOUNDS,
+  gameMoveNotYourTurn: ClientEventCode.GAME_MOVE_NOT_YOUR_TURN,
+  gameOver: ClientEventCode.GAME_OVER,
+  pveDifficultyNotSupport: ClientEventCode.PVE_DIFFICULTY_NOT_SUPPORT,
+  watchGameSuccess: ClientEventCode.GAME_WATCH_SUCCESSFUL,
+  clientExit: ClientEventCode.CLIENT_EXIT,
+});
 
 class ConnectionService {
   constructor() {
@@ -32,6 +60,7 @@ class ConnectionService {
 
     try {
       this._ws = new WebSocket(wsUrl);
+      this._ws.binaryType = 'arraybuffer';
     } catch (e) {
       console.error('WebSocket creation failed:', e);
       return;
@@ -58,21 +87,21 @@ class ConnectionService {
     };
   }
 
-  /**
-   * Send a message to the server.
-   * @param {string} code - ServerEventCode value
-   * @param {string|object} [data] - payload (objects are JSON.stringify'd)
-   */
-  send(code, data) {
-    if (!this._ws || this._ws.readyState !== WebSocket.OPEN) {
-      console.warn('WebSocket not connected, cannot send:', code);
-      return;
-    }
-    const dataStr = (data === undefined || data === null) ? ''
-      : (typeof data === 'string') ? data
-      : JSON.stringify(data);
-    this._ws.send(JSON.stringify({ code, data: dataStr, info: '' }));
-  }
+  // -------- Typed send helpers (one per Request oneof variant) --------
+
+  sendHeartbeat() { this._sendRequest({ heartbeat: {} }); }
+  sendNickname(nickname) { this._sendRequest({ setNickname: { nickname } }); }
+  sendClientInfo(version) { this._sendRequest({ setClientInfo: { version } }); }
+  sendCreateRoom() { this._sendRequest({ createRoom: {} }); }
+  sendCreatePveRoom(difficulty) { this._sendRequest({ createPveRoom: { difficulty } }); }
+  sendGetRooms() { this._sendRequest({ getRooms: {} }); }
+  sendJoinRoom(roomId) { this._sendRequest({ joinRoom: { roomId } }); }
+  sendGameReady() { this._sendRequest({ gameReady: {} }); }
+  sendGameMove(row, col) { this._sendRequest({ gameMove: { row, col } }); }
+  sendGameReset() { this._sendRequest({ gameReset: {} }); }
+  sendWatchGame(roomId) { this._sendRequest({ watchGame: { roomId } }); }
+  sendWatchGameExit() { this._sendRequest({ watchGameExit: {} }); }
+  sendClientExit() { this._sendRequest({ clientExit: {} }); }
 
   /** Close the connection intentionally. */
   disconnect() {
@@ -82,20 +111,48 @@ class ConnectionService {
   }
 
   /**
-   * Parse incoming WebSocket message and emit via event bus.
+   * Encode a Request oneof payload and push it as a binary frame.
+   * @param {object} oneofPayload - e.g. {@code { gameMove: {row, col} }}
+   * @private
+   */
+  _sendRequest(oneofPayload) {
+    if (!this._ws || this._ws.readyState !== WebSocket.OPEN) {
+      console.warn('WebSocket not connected, cannot send:', oneofPayload);
+      return;
+    }
+    try {
+      const req = Request.create(oneofPayload);
+      const bytes = Request.encode(req).finish();
+      this._ws.send(bytes);
+    } catch (e) {
+      console.error('Request encode failed:', e, oneofPayload);
+    }
+  }
+
+  /**
+   * Decode an incoming binary Response frame and emit via event bus.
    * @param {MessageEvent} event
    * @private
    */
   _onMessage(event) {
     try {
-      const msg = JSON.parse(event.data);
-      let data = msg.data;
-      if (data && typeof data === 'string') {
-        try { data = JSON.parse(data); } catch (_) { /* keep as string */ }
+      const bytes = new Uint8Array(event.data);
+      const res = Response.decode(bytes);
+      const caseName = res.payload; // protobufjs exposes the set oneof case name here
+      if (!caseName) return;
+      const eventCode = RESPONSE_CASE_TO_CLIENT_CODE[caseName];
+      if (!eventCode) {
+        console.warn('Unknown Response oneof case:', caseName);
+        return;
       }
-      eventBus.emit(msg.code, data);
+      // Convert the proto message into a plain object for consumers.
+      const payloadMsg = res[caseName];
+      const payloadObj = payloadMsg && typeof payloadMsg.toJSON === 'function'
+        ? payloadMsg.toJSON()
+        : payloadMsg;
+      eventBus.emit(eventCode, payloadObj);
     } catch (e) {
-      console.error('Message parse error:', e, event.data);
+      console.error('Message decode error:', e, event.data);
     }
   }
 
@@ -103,7 +160,7 @@ class ConnectionService {
   _startHeartbeat() {
     this._stopHeartbeat();
     this._heartbeatTimer = setInterval(() => {
-      this.send(ServerEventCode.HEARTBEAT, '');
+      this.sendHeartbeat();
     }, 50000);
   }
 
@@ -135,7 +192,7 @@ class ConnectionService {
     if (typeof window !== 'undefined' && window.location.hostname !== 'localhost'
         && window.location.hostname !== '127.0.0.1') {
       const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      return `${proto}//${window.location.hostname}:1025/ratel`;
+      return `${proto}//${window.location.hostname}:1999/ratel`;
     }
     return DEFAULT_WS_URL;
   }

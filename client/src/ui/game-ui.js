@@ -7,7 +7,7 @@
 import { connectionService } from '../services/connection-service.js';
 import { eventBus } from '../services/event-bus.js';
 import { gameState } from '../services/game-state-service.js';
-import { ServerEventCode, ClientEventCode } from '../config/protocol-constants.js';
+import { ClientEventCode } from '../config/protocol-constants.js';
 
 const overlay = () => document.getElementById('ui-overlay');
 
@@ -43,7 +43,7 @@ export function showGameHud() {
   `;
   el.style.display = 'flex';
   document.getElementById('btn-exit-game').addEventListener('click', () => {
-    connectionService.send(ServerEventCode.CLIENT_EXIT, '');
+    connectionService.sendClientExit();
   });
   updateTurnIndicator();
 }
@@ -110,10 +110,10 @@ export function showGameOver(data) {
     </div>
   `;
   document.getElementById('btn-rematch').addEventListener('click', () => {
-    connectionService.send(ServerEventCode.GAME_READY, '');
+    connectionService.sendGameReady();
   });
   document.getElementById('btn-exit-lobby').addEventListener('click', () => {
-    connectionService.send(ServerEventCode.CLIENT_EXIT, '');
+    connectionService.sendClientExit();
   });
 }
 

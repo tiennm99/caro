@@ -10,7 +10,7 @@ import { Stone, createLastMoveMarker } from '../objects/stone.js';
 import { eventBus } from '../services/event-bus.js';
 import { gameState } from '../services/game-state-service.js';
 import { connectionService } from '../services/connection-service.js';
-import { ServerEventCode, ClientEventCode } from '../config/protocol-constants.js';
+import { ClientEventCode } from '../config/protocol-constants.js';
 import { showGameHud, updateTurnIndicator, addMoveToHistory, showGameOver } from '../ui/game-ui.js';
 import { showLobby } from '../ui/menu-ui.js';
 
@@ -118,7 +118,7 @@ export class GameScene extends Phaser.Scene {
     const pos = this.board.pixelToGrid(pointer.x, pointer.y);
     if (!pos) return;
     if (gameState.isOccupied(pos.row, pos.col)) return;
-    connectionService.send(ServerEventCode.GAME_MOVE, { row: pos.row, col: pos.col });
+    connectionService.sendGameMove(pos.row, pos.col);
   }
 
   /**

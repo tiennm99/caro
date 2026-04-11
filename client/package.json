@@ -5,12 +5,15 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "proto:gen": "pbjs -t static-module -w es6 -o src/generated/protocol.js ../server/src/main/proto/request.proto ../server/src/main/proto/response.proto && pbts -o src/generated/protocol.d.ts src/generated/protocol.js"
   },
   "dependencies": {
-    "phaser": "^3.87.0"
+    "phaser": "^3.87.0",
+    "protobufjs": "^7.5.4"
   },
   "devDependencies": {
+    "protobufjs-cli": "^1.1.3",
     "vite": "^6.3.1"
   }
 }
