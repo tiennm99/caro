@@ -19,7 +19,7 @@ jobs:
           distribution: temurin
           java-version: 25
       - uses: gradle/actions/setup-gradle@v4
-      - run: ./gradlew -p server --no-daemon clean build
+      - run: server/gradlew -p server --no-daemon clean build
 
   build-client:
     name: Build Client
