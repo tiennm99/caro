@@ -112,10 +112,11 @@ function showPveMenu() {
 
 /**
  * Show room list.
- * @param {Array} rooms
+ * @param {{ rooms?: Array }} payload - ShowRoomsResponse payload (rooms may be
+ *   undefined when protobufjs strips the empty repeated field)
  */
-export function showRoomList(rooms) {
-  const rows = Array.isArray(rooms) ? rooms : [];
+export function showRoomList(payload) {
+  const rows = (payload && Array.isArray(payload.rooms)) ? payload.rooms : [];
   const tableRows = rows.length === 0
     ? '<tr><td colspan="4" class="empty-state">No rooms available</td></tr>'
     : rows.map(r => `
