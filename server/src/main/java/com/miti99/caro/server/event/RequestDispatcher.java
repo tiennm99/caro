@@ -1,6 +1,19 @@
 package com.miti99.caro.server.event;
 
 import com.miti99.caro.common.entity.ClientSide;
+import com.miti99.caro.server.event.handler.ClientExitHandler;
+import com.miti99.caro.server.event.handler.CreatePveRoomHandler;
+import com.miti99.caro.server.event.handler.CreateRoomHandler;
+import com.miti99.caro.server.event.handler.GameMoveHandler;
+import com.miti99.caro.server.event.handler.GameReadyHandler;
+import com.miti99.caro.server.event.handler.GameResetHandler;
+import com.miti99.caro.server.event.handler.GameStartingHandler;
+import com.miti99.caro.server.event.handler.GetRoomsHandler;
+import com.miti99.caro.server.event.handler.JoinRoomHandler;
+import com.miti99.caro.server.event.handler.SetClientInfoHandler;
+import com.miti99.caro.server.event.handler.SetNicknameHandler;
+import com.miti99.caro.server.event.handler.WatchGameExitHandler;
+import com.miti99.caro.server.event.handler.WatchGameHandler;
 import com.miti99.caro.server.event.request.ClientExitRequestRecord;
 import com.miti99.caro.server.event.request.ClientRequest;
 import com.miti99.caro.server.event.request.CreatePveRoomRequestRecord;
@@ -20,9 +33,6 @@ import com.miti99.caro.server.event.request.WatchGameRequestRecord;
 /**
  * Routes a {@link ClientRequest} record to its handler via exhaustive pattern
  * matching. Replaces the old reflection-based {@code ServerEventListener} lookup.
- *
- * <p>Phase 02a: only {@code HeartbeatRequestRecord} has a real no-op implementation;
- * every other case throws {@link UnsupportedOperationException} pending Phase 02b.
  */
 public final class RequestDispatcher {
 
@@ -34,23 +44,19 @@ public final class RequestDispatcher {
             case HeartbeatRequestRecord r -> {
                 /* no-op: heartbeat just refreshes IdleStateHandler */
             }
-            case SetNicknameRequestRecord r -> throw todo("set_nickname");
-            case SetClientInfoRequestRecord r -> throw todo("set_client_info");
-            case CreateRoomRequestRecord r -> throw todo("create_room");
-            case CreatePveRoomRequestRecord r -> throw todo("create_pve_room");
-            case GetRoomsRequestRecord r -> throw todo("get_rooms");
-            case JoinRoomRequestRecord r -> throw todo("join_room");
-            case GameStartingRequestRecord r -> throw todo("game_starting");
-            case GameReadyRequestRecord r -> throw todo("game_ready");
-            case GameMoveRequestRecord r -> throw todo("game_move");
-            case GameResetRequestRecord r -> throw todo("game_reset");
-            case WatchGameRequestRecord r -> throw todo("watch_game");
-            case WatchGameExitRequestRecord r -> throw todo("watch_game_exit");
-            case ClientExitRequestRecord r -> throw todo("client_exit");
+            case SetNicknameRequestRecord r -> SetNicknameHandler.handle(client, r);
+            case SetClientInfoRequestRecord r -> SetClientInfoHandler.handle(client, r);
+            case CreateRoomRequestRecord r -> CreateRoomHandler.handle(client, r);
+            case CreatePveRoomRequestRecord r -> CreatePveRoomHandler.handle(client, r);
+            case GetRoomsRequestRecord r -> GetRoomsHandler.handle(client, r);
+            case JoinRoomRequestRecord r -> JoinRoomHandler.handle(client, r);
+            case GameStartingRequestRecord r -> GameStartingHandler.handle(client, r);
+            case GameReadyRequestRecord r -> GameReadyHandler.handle(client, r);
+            case GameMoveRequestRecord r -> GameMoveHandler.handle(client, r);
+            case GameResetRequestRecord r -> GameResetHandler.handle(client, r);
+            case WatchGameRequestRecord r -> WatchGameHandler.handle(client, r);
+            case WatchGameExitRequestRecord r -> WatchGameExitHandler.handle(client, r);
+            case ClientExitRequestRecord r -> ClientExitHandler.handle(client, r);
         }
-    }
-
-    private static UnsupportedOperationException todo(String name) {
-        return new UnsupportedOperationException("TODO phase 02b: " + name);
     }
 }

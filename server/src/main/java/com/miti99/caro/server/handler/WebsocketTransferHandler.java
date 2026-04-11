@@ -13,6 +13,7 @@ import com.miti99.caro.protocol.Response;
 import com.miti99.caro.server.ServerContains;
 import com.miti99.caro.server.event.RequestConverter;
 import com.miti99.caro.server.event.RequestDispatcher;
+import com.miti99.caro.server.event.handler.ClientOfflineHandler;
 import com.miti99.caro.server.event.request.ClientRequest;
 import com.miti99.caro.server.event.request.HeartbeatRequestRecord;
 
@@ -107,7 +108,7 @@ public class WebsocketTransferHandler extends SimpleChannelInboundHandler<Binary
         ClientSide client = ServerContains.CLIENT_SIDE_MAP.get(clientId);
         if (client != null) {
             SimplePrinter.serverLog("Has client exit to the server: " + clientId + " | " + client.getNickname());
-            // TODO phase 02b: wire to ClientOfflineHandler.handle(client)
+            ClientOfflineHandler.handle(client);
         }
     }
 }
