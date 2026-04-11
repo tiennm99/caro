@@ -27,8 +27,7 @@ docker compose up --build -d
 
 Then:
 - Client: `http://localhost:8080/`
-- Server TCP: `localhost:1024` (Protobuf)
-- Server WebSocket: `ws://localhost:1025/ratel`
+- Server WebSocket: `ws://localhost:1999/ratel` (binary typed protobuf)
 
 Stop:
 ```bash
@@ -36,7 +35,7 @@ docker compose down
 ```
 
 What's running:
-- **caro-server** — Java 25 server, listens on `1024` (TCP) + `1025` (WebSocket)
+- **caro-server** — Java 25 server, listens on port `1999` (WebSocket only at `/ratel`)
 - **caro-client** — Nginx serving the built Vite bundle on host port `8080`
 
 Storage: in-memory only; games are not persisted. Restarting clears all rooms.
@@ -84,20 +83,19 @@ Tests: 29 GomokuHelperTest + 8 GomokuAITest (JUnit 5). All must pass.
 ### 3. Run the Server
 
 ```bash
-java -jar server/build/libs/caro-server-0.0.1.jar -p 1024
+java -jar server/build/libs/caro-server-0.0.1.jar
 ```
 
 Output:
 ```
-[INFO] Server listening on port 1024 (TCP)
-[INFO] WebSocket server listening on port 1025
+[INFO] Server listening on port 1999 (WebSocket)
+[INFO] WebSocket endpoint: /ratel
 ```
 
 What's running:
-- **TCP port 1024** — Protobuf protocol
-- **WebSocket port 1025** — JSON protocol at `/ratel`
+- **WebSocket port 1999** — Binary typed protobuf at `/ratel`
 
-Note: non-WebSocket HTTP requests to `1025` return a 400/403 (no static file serving).
+Connect via: `ws://localhost:1999/ratel`
 
 ### 4. Run the Client (Vite dev server)
 
@@ -124,11 +122,13 @@ Open `http://localhost:5173/` — Phaser 3 client with full game UI.
 ### Option A: Standalone JAR
 
 ```bash
-java -jar caro-server-0.0.1.jar -p 1024
+java -jar caro-server-0.0.1.jar
 ```
 
+Server defaults to port 1999 (WebSocket only).
+
 For production:
-- Run in background: `nohup java -jar ... &`
+- Run in background: `nohup java -jar caro-server-0.0.1.jar &`
 - Or use systemd (see below)
 - Or container (Docker)
 
@@ -137,10 +137,6 @@ System requirements:
 - 1 GB RAM (recommended)
 - 100 MB disk
 - Java 25 runtime
-
-Port configuration:
-- Server listens on `-p {port}` (TCP)
-- WebSocket automatically uses `{port}+1`
 
 ### Option B: Docker Container
 
@@ -156,8 +152,7 @@ docker build -f server/Dockerfile -t caro-server:0.0.1 .
 Run:
 ```bash
 docker run -d --name caro-server \
-  -p 1024:1024/tcp \
-  -p 1025:1025/tcp \
+  -p 1999:1999/tcp \
   caro-server:0.0.1
 ```
 
@@ -174,7 +169,7 @@ After=network.target
 Type=simple
 User=gameserver
 WorkingDirectory=/opt/caro
-ExecStart=/usr/bin/java -jar /opt/caro/caro-server-0.0.1.jar -p 1024
+ExecStart=/usr/bin/java -jar /opt/caro/caro-server-0.0.1.jar
 Restart=on-failure
 RestartSec=10
 StandardOutput=journal
@@ -244,7 +239,7 @@ server {
 
     # WebSocket proxy to server
     location /ratel {
-        proxy_pass http://localhost:1025;
+        proxy_pass http://localhost:1999;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection "upgrade";
@@ -267,25 +262,17 @@ sudo systemctl restart nginx
 
 ### Server Options
 
-```bash
-java -jar caro-server-0.0.1.jar [OPTIONS]
-```
+Server uses defaults. No command-line arguments to configure port. Default port is 1999.
 
-Available options:
-```
--p, -port    TCP port (default: 1024)
-              WebSocket uses port + 1
-```
-
-Examples:
-```bash
-java -jar caro-server-0.0.1.jar -p 1024    # TCP:1024, WS:1025
-java -jar caro-server-0.0.1.jar -p 8080    # TCP:8080, WS:8081
+To change port, modify `SimpleServer.java` and rebuild:
+```java
+// Default: 1999
+private static final int DEFAULT_PORT = 1999;
 ```
 
 ### Client Configuration
 
-Connection endpoint is in `client/src/services/connection-service.js`. By default the client connects to WS on `window.location.hostname:1025/ratel`. To override, edit that file and rebuild.
+Connection endpoint is in `client/src/services/connection-service.js`. By default the client connects to WS on `window.location.hostname:1999/ratel`. To override, edit that file and rebuild.
 
 ---
 
@@ -329,13 +316,13 @@ No automated tests currently. Manual testing:
 ### Server Health Check
 
 ```bash
-# Check TCP port
-netstat -an | grep 1024
+# Check WebSocket port
+netstat -an | grep 1999
 # or
-lsof -i :1024
+lsof -i :1999
 
 # Test WebSocket
-websocat ws://localhost:1025/ratel
+websocat ws://localhost:1999/ratel
 ```
 
 ### Logs
@@ -359,7 +346,7 @@ netstat -an | grep -c ESTABLISHED
 Restart:
 ```bash
 kill $(pgrep -f caro-server)
-java -jar server/build/libs/caro-server-0.0.1.jar -p 1024
+java -jar server/build/libs/caro-server-0.0.1.jar
 ```
 
 ---
@@ -369,24 +356,25 @@ java -jar server/build/libs/caro-server-0.0.1.jar -p 1024
 ### Port Already in Use
 
 ```bash
-lsof -i :1024
+lsof -i :1999
 kill -9 <PID>
-# Or use a different port
-java -jar caro-server-0.0.1.jar -p 9090
 ```
+
+To use a different port, modify `SimpleServer.java` and rebuild.
 
 ### Connection Refused
 
 1. Verify server is running: `ps aux | grep caro-server`
-2. Check firewall: `sudo ufw allow 1024/tcp && sudo ufw allow 1025/tcp`
-3. Test connectivity: `nc -zv localhost 1024`
+2. Check firewall: `sudo ufw allow 1999/tcp`
+3. Test connectivity: `nc -zv localhost 1999`
 4. Docker: `docker compose ps` and `docker compose port server`
 
 ### WebSocket Connection Fails
 
-1. WebSocket listens on `TCP port + 1` (default 1025)
-2. Ensure the client URL is correct: `ws://host:1025/ratel`
-3. Test directly: `websocat ws://localhost:1025/ratel`
+1. WebSocket listens on port 1999 at path `/ratel`
+2. Ensure the client URL is correct: `ws://host:1999/ratel`
+3. Test directly: `websocat ws://localhost:1999/ratel`
+4. Verify server logs for request decoding errors
 
 ### High Memory Usage
 
@@ -395,7 +383,7 @@ java -jar caro-server-0.0.1.jar -p 9090
 netstat -an | grep ESTABLISHED | wc -l
 
 # Increase JVM heap
-java -Xmx2g -jar caro-server-0.0.1.jar -p 1024
+java -Xmx2g -jar caro-server-0.0.1.jar
 
 # Restart to reclaim memory
 ```
@@ -409,7 +397,7 @@ Before going live:
 - [ ] Java 25 installed and verified
 - [ ] `./server/gradlew -p server clean build` passes (37 tests)
 - [ ] Server boots without errors
-- [ ] TCP port 1024 and WebSocket port 1025 open (firewall)
+- [ ] WebSocket port 1999 open (firewall)
 - [ ] Client built: `npm --prefix client ci && npm --prefix client run build`
 - [ ] Client connects to correct server endpoint
 - [ ] Manual test: create game, make moves, join room, spectate
@@ -425,7 +413,7 @@ Before going live:
 1. Back up current jar
 2. Pull + rebuild: `git pull && ./server/gradlew -p server clean build`
 3. Stop: `kill $(pgrep -f caro-server)`
-4. Start new jar: `java -jar server/build/libs/caro-server-0.0.1.jar -p 1024`
+4. Start new jar: `java -jar server/build/libs/caro-server-0.0.1.jar`
 
 ### Update Client
 
@@ -447,7 +435,7 @@ Before going live:
 For production servers with 4+ GB RAM:
 
 ```bash
-java -Xmx4g -XX:+UseG1GC -jar caro-server-0.0.1.jar -p 1024
+java -Xmx4g -XX:+UseG1GC -jar caro-server-0.0.1.jar
 ```
 
 Java 25 defaults are already sensible; tune only if needed.

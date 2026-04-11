@@ -11,7 +11,7 @@ Built on [Netty](https://netty.io/) (server) and [Phaser 3](https://phaser.io/) 
 - **Player vs AI (PVE)** — three difficulty levels (Easy, Medium, Hard)
 - **Spectator mode** — watch ongoing games in real-time
 - **Phaser web client** — professional 2D game UI with canvas board, stone animations, sound effects
-- **WebSocket + TCP** — dual protocol support
+- **Typed protobuf over WebSocket** — single binary wire protocol on port 1999
 
 ## Prerequisites
 
@@ -27,7 +27,7 @@ cd caro
 docker compose up -d
 ```
 
-Then open `http://localhost:8080/` in your browser. The server listens on ports `1024` (TCP) and `1025` (WebSocket); the client is served at `8080`.
+Then open `http://localhost:8080/` in your browser. The server listens on port `1999` (WebSocket); the client is served at `8080`.
 
 ## Quick Start (Local)
 
@@ -35,14 +35,13 @@ Then open `http://localhost:8080/` in your browser. The server listens on ports 
 
 ```bash
 ./server/gradlew -p server clean build
-java -jar server/build/libs/caro-server-0.0.1.jar -p 1024
+java -jar server/build/libs/caro-server-0.0.1.jar -p 1999
 ```
 
 On Windows use `server\gradlew.bat` instead of `./server/gradlew`.
 
-The server starts two listeners:
-- **TCP** on port `1024` (Protobuf)
-- **WebSocket** on port `1025` (JSON)
+The server starts one listener:
+- **WebSocket** on port `1999` (typed protobuf binary frames at `/ratel`)
 
 ### 2. Run the client (Vite dev server)
 
@@ -81,9 +80,22 @@ caro/
 ```
 Client (browser)
   |
-  +-- TCP  :1024  -->  ProtobufTransferHandler   -->  ServerEventListener_*
-  +-- WS   :1025  -->  WebsocketTransferHandler  -->  ServerEventListener_*
+  +-- WS :1999 /ratel  -->  WebsocketTransferHandler
+                              |
+                              v
+                            RequestConverter  (wire Request -> sealed ClientRequest record)
+                              |
+                              v
+                            RequestDispatcher (pattern-match switch on record)
+                              |
+                              v
+                            <Verb>Handler     (typed business logic, emits typed Response)
 ```
+
+Protobuf schemas live at `server/src/main/proto/{request,response}.proto`.
+The `com.google.protobuf` Gradle plugin generates Java classes into
+`server/build/generated/sources/proto/main/java/com/miti99/caro/protocol/`.
+No reflection, no string-keyed lookups.
 
 ### Client Architecture
 
@@ -92,7 +104,10 @@ client/src/
   main.js                    Phaser game boot
   config/
     game-config.js           Phaser config (800x800, Scale.FIT)
-    protocol-constants.js    Server/client event code enums
+    protocol-constants.js    ClientEventCode (event bus keys) only
+  generated/
+    protocol.js              pbjs static-module output (Request/Response)
+    protocol.d.ts            pbts TypeScript typings for protocol.js
   scenes/
     boot-scene.js            Connect to server
     menu-scene.js            DOM overlay menus
@@ -112,7 +127,7 @@ client/src/
 ## Server Options
 
 ```
--p, -port    TCP port (default: 1024, WebSocket = TCP + 1)
+-p, -port    WebSocket port (default: 1999)
 ```
 
 ## Client Scripts
@@ -121,18 +136,24 @@ client/src/
 npm --prefix client run dev      # Start Vite dev server (port 5173)
 npm --prefix client run build    # Production build to client/dist/
 npm --prefix client run preview  # Preview production build
+npm --prefix client run proto:gen # Regenerate client/src/generated/protocol.{js,d.ts}
 ```
 
 ## Protocol
 
-Communication uses JSON messages over WebSocket or Protobuf over TCP.
+Communication uses **typed protobuf binary frames** over WebSocket.
 
-WebSocket message format:
-```json
-{"code": "CODE_GAME_MOVE", "data": "{\"row\":7,\"col\":7}", "info": ""}
+Every client-to-server message is an instance of the `Request` oneof wrapper
+(`server/src/main/proto/request.proto`); every server-to-client message is an
+instance of the `Response` oneof wrapper (`server/src/main/proto/response.proto`).
+The oneof case IS the event type — there are no string codes on the wire.
+
+WebSocket endpoint: `ws://host:1999/ratel`
+
+Example (send a move at row 7, col 7):
+```js
+connectionService.sendGameMove(7, 7); // builds Request { game_move: { row: 7, col: 7 } }
 ```
-
-WebSocket endpoint: `ws://host:{tcp_port + 1}/ratel`
 
 ## Credits
 

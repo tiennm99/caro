@@ -11,25 +11,27 @@ caro/
 │   ├── src/main/java/com/miti99/caro/
 │   │   ├── common/
 │   │   │   ├── channel/                 Netty utilities (ChannelUtils)
-│   │   │   ├── entity/                  Data models (Board, Room, GameMove, Msg, ClientSide)
-│   │   │   ├── enums/                   ServerEventCode, ClientEventCode, PieceType, etc.
+│   │   │   ├── entity/                  Data models (Board, Room, GameMove, ClientSide)
+│   │   │   ├── enums/                   ClientEventCode, PieceType, GameResult, RoomType, etc.
 │   │   │   ├── exception/               LandlordException
 │   │   │   ├── features/                Feature flags
-│   │   │   ├── handler/                 Protocol codec (DefaultDecoder)
-│   │   │   ├── helper/                  GomokuHelper, MapHelper
+│   │   │   ├── helper/                  GomokuHelper (win detection)
 │   │   │   ├── print/                   SimplePrinter
 │   │   │   ├── robot/                   AI engine (GomokuAI)
-│   │   │   ├── transfer/                Binary serialization (ByteKit, ByteLink, TransferProtocolUtils)
-│   │   │   └── utils/                   JsonUtils (gson), ListUtils, OptionsUtils, StreamUtils
+│   │   │   └── utils/                   ListUtils, OptionsUtils, StreamUtils
 │   │   └── server/
-│   │       ├── event/                   ServerEventListener_* handlers
-│   │       ├── handler/                 Netty pipeline (Protobuf/WS codecs)
-│   │       ├── proxy/                   ProtobufProxy, WebsocketProxy
+│   │       ├── event/
+│   │       │   ├── request/             ClientRequest sealed interface + record variants (14 types)
+│   │       │   ├── handler/             14 typed request handlers (*Handler.java)
+│   │       │   ├── RequestConverter.java Protobuf→ClientRequest conversion
+│   │       │   └── RequestDispatcher.java Pattern-match dispatch logic
+│   │       ├── handler/                 Netty pipeline (WebsocketTransferHandler)
 │   │       ├── timer/                   RoomClearTask
 │   │       ├── SimpleServer.java        Server entry point
 │   │       └── ServerContains.java      Global state container
-│   ├── src/main/resources/
-│   │   └── proto/                       .proto files + generate.sh (future proto-over-WS)
+│   ├── src/main/proto/
+│   │   ├── request.proto                Client→server typed message definitions
+│   │   └── response.proto               Server→client typed message definitions
 │   ├── src/test/java/com/miti99/caro/common/
 │   │   ├── helper/tests/GomokuHelperTest.java    29 JUnit 5 tests
 │   │   └── robot/tests/GomokuAITest.java          8 JUnit 5 tests
@@ -85,9 +87,8 @@ caro/
 - `Board.java` — 15x15 game board, move validation, win/draw detection (`BOARD_SIZE=15`, `WIN_CONDITION=5`)
 - `Room.java` — Game session state (id, type, status, players, board, moveHistory)
 - `GameMove.java` — Single move (row, col, piece, playerId, timestamp)
-- `Msg.java` — WebSocket JSON envelope (record: code, data, info)
-- `ServerTransferData.java` / `ClientTransferData.java` — Protobuf-generated wire types
 - `ClientSide.java` — Player connection state (nickname, status, role)
+- Generated proto messages — `Request`, `Response` oneof wrappers (in `server/build/generated/sources/proto/main/java/`)
 
 **Enums:**
 - `ServerEventCode` — client→server action codes
@@ -101,37 +102,31 @@ caro/
 - `GomokuAI.java` — AI move selection (Easy/Medium/Hard)
 
 **Utilities:**
-- `JsonUtils.java` — gson wrapper (`toJson`, `fromJson`)
 - `ListUtils`, `OptionsUtils`, `StreamUtils`
-- `MapHelper.java` — Fluent map builder (uses gson)
 
-**Protocol:**
-- `ByteKit`, `ByteLink` — Byte buffer operations
-- `TransferProtocolUtils.java` — Protocol framing (`#...$` delimiters, gson JSON body)
-- `DefaultDecoder.java` — Protobuf message decoder
+**Dispatch (typed records):**
+- `ClientRequest` — Sealed interface representing all possible client requests (14 variants)
+- Record types: `SetNicknameRequest`, `CreateRoomRequest`, `CreatePveRoomRequest`, `GetRoomsRequest`, `JoinRoomRequest`, `GameStartingRequest`, `GameReadyRequest`, `GameMoveRequest`, `GameResetRequest`, `WatchGameRequest`, `WatchGameExitRequest`, `ClientExitRequest`, `ClientOfflineRequest`, `SetClientInfoRequest`
 
 ---
 
 ### `com.miti99.caro.server` (Server code)
 
 **Entry Point:**
-- `SimpleServer.java` — Bootstrap (`-p {port}`, default 1024)
-  - Starts TCP proxy on `port` and WebSocket proxy on `port+1`
+- `SimpleServer.java` — Bootstrap (WebSocket server defaults to port 1999 at `/ratel`)
 - `ServerContains.java` — Singleton global state (rooms, client sides, channel map)
 
-**Event Handlers (ServerEventListener_*):**
-- `CODE_CLIENT_NICKNAME_SET`, `CODE_ROOM_CREATE`, `CODE_ROOM_CREATE_PVE`, `CODE_GET_ROOMS`
-- `CODE_ROOM_JOIN`, `CODE_GAME_STARTING`, `CODE_GAME_READY`, `CODE_GAME_MOVE`
-- `CODE_GAME_WATCH` / `CODE_GAME_WATCH_EXIT`, `CODE_CLIENT_OFFLINE`
+**Event Handlers (14 *Handler classes):**
+- `SetNicknameHandler`, `CreateRoomHandler`, `CreatePveRoomHandler`, `GetRoomsHandler`, `JoinRoomHandler`
+- `GameStartingHandler`, `GameReadyHandler`, `GameMoveHandler`, `GameResetHandler`
+- `WatchGameHandler`, `WatchGameExitHandler`, `ClientExitHandler`, `ClientOfflineHandler`, `SetClientInfoHandler`
 
-**Network Handlers:**
-- `ProtobufTransferHandler` — TCP/Protobuf codec
-- `WebsocketTransferHandler` — WebSocket JSON codec (uses `JsonUtils.fromJson(text, Msg.class)`)
-- `SecondProtobufCodec` — Second-pass protobuf decoder
+**Request Processing:**
+- `RequestConverter` — Decodes `Request` oneof from binary wire format → typed `ClientRequest` variant
+- `RequestDispatcher` — Pattern-matches `ClientRequest` variant → dispatches to corresponding handler
 
-**Message Proxies:**
-- `ProtobufProxy` — TCP server bootstrap
-- `WebsocketProxy` — WebSocket server bootstrap (no static file handler; non-WS HTTP → default Netty 400/403)
+**Network Handler:**
+- `WebsocketTransferHandler` — Netty pipeline handler: decodes binary frame to `Request` protobuf message
 
 **Background Tasks:**
 - `RoomClearTask` — Periodic cleanup
@@ -181,20 +176,21 @@ caro/
 
 **Plugins:**
 - `java` — standard Java plugin
-- `com.gradleup.shadow:8.3.5` — fat jar packaging
+- `com.google.protobuf:0.9.6` — protobuf code generation
+- `com.gradleup.shadow:8.3.8` — fat jar packaging
 
 **Toolchain:** `JavaLanguageVersion.of(25)` — Gradle auto-provisions Java 25 if missing.
 
 **Dependencies:**
-- `io.netty:netty-all:4.1.115.Final` — async networking
-- `com.google.protobuf:protobuf-java:3.25.5` — binary serialization
-- `com.google.code.gson:gson:2.11.0` — JSON (supports records)
-- `org.junit:junit-bom:5.11.3` (platform) + `org.junit.jupiter:junit-jupiter` — testing
+- `io.netty:netty-all:4.1.128.Final` — async networking
+- `com.google.protobuf:protobuf-java:3.25.5` — binary serialization, generated code
+- `com.google.protobuf:protoc:3.25.5` — protobuf compiler (build time)
+- `org.junit:junit-bom:5.11.4` (platform) + `org.junit.jupiter:junit-jupiter` — testing
 
 **Shadow jar config:**
 - Main class: `com.miti99.caro.server.SimpleServer`
+- No special command-line args (server defaults to port 1999)
 - `mergeServiceFiles()` — preserve Netty SPIs
-- `append("META-INF/io.netty.versions.properties")` — merge Netty version file
 - Excludes signing metadata (`*.SF`, `*.DSA`, `*.RSA`)
 
 **Build Command:**
@@ -213,10 +209,13 @@ caro/
 - `npm run dev` — Dev server (port 5173, hot reload)
 - `npm run build` — Production build to `dist/`
 - `npm run preview` — Preview production build
+- `npm run proto:gen` — Regenerate protobuf code from server `.proto` files (uses `pbjs` + `pbts`)
 
 **Dependencies:**
 - `phaser ^3.87.0` — Game engine
+- `protobufjs ^7.5.4` — JavaScript protobuf codec
 - `vite ^6.3.1` — Bundler (dev-only)
+- `@protobufjs/cli ^1.1.3` — Protobuf code generator (dev-only)
 
 **Output:** `client/dist/` (index.html + bundled JS, ~1.5 MB / 346 KB gzipped)
 
@@ -243,10 +242,11 @@ caro/
 
 | Scope | Dependencies |
 |-------|--------------|
-| **server runtime** | Netty 4.1.115, Protobuf 3.25.5, gson 2.11.0 |
-| **server test** | JUnit Jupiter 5.11.3 |
-| **client runtime** | Phaser 3.87 |
-| **client build** | Vite 6.3 |
+| **server runtime** | Netty 4.1.128, Protobuf 3.25.5 (generated code) |
+| **server test** | JUnit Jupiter 5.11.4 |
+| **server build** | Gradle 9.2.1, Protobuf Gradle plugin 0.9.6, Shadow 8.3.8 |
+| **client runtime** | Phaser 3.87, protobufjs 7.5.4 |
+| **client build** | Vite 6.3, protobufjs-cli 1.1.3 |
 
 ---
 
@@ -258,14 +258,16 @@ caro/
 - `server/src/main/java/com/miti99/caro/common/robot/GomokuAI.java`
 
 ### Networking
-- `server/src/main/java/com/miti99/caro/server/handler/WebsocketTransferHandler.java`
-- `server/src/main/java/com/miti99/caro/server/handler/ProtobufTransferHandler.java`
-- `server/src/main/java/com/miti99/caro/common/channel/ChannelUtils.java`
-- `client/src/services/connection-service.js`
+- `server/src/main/java/com/miti99/caro/server/handler/WebsocketTransferHandler.java` — Binary decoder
+- `server/src/main/java/com/miti99/caro/server/event/RequestConverter.java` — Protobuf→record conversion
+- `server/src/main/java/com/miti99/caro/server/event/RequestDispatcher.java` — Dispatch logic
+- `server/src/main/java/com/miti99/caro/common/channel/ChannelUtils.java` — Response encoder/sender
+- `client/src/services/connection-service.js` — WebSocket client (binary mode)
+- `server/src/main/proto/*.proto` — Message definitions
 
 ### Game Flow
-- `server/src/main/java/com/miti99/caro/server/event/ServerEventListener_CODE_GAME_MOVE.java`
-- `server/src/main/java/com/miti99/caro/server/event/ServerEventListener_CODE_GAME_STARTING.java`
+- `server/src/main/java/com/miti99/caro/server/event/handler/GameMoveHandler.java`
+- `server/src/main/java/com/miti99/caro/server/event/handler/GameStartingHandler.java`
 - `client/src/scenes/game-scene.js`
 
 ### UI

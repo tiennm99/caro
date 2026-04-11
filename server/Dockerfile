@@ -21,7 +21,7 @@ WORKDIR /app
 
 COPY --from=build /build/server/build/libs/caro-server-0.0.1.jar app.jar
 
-# TCP (protobuf) and WebSocket ports
-EXPOSE 1024 1025
+# Single WebSocket port carrying typed protobuf binary frames
+EXPOSE 1999
 
-ENTRYPOINT ["java", "-jar", "app.jar", "-p", "1024"]
+ENTRYPOINT ["java", "-jar", "app.jar", "-p", "1999"]

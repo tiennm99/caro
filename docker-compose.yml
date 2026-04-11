@@ -5,8 +5,7 @@ services:
       dockerfile: server/Dockerfile
     container_name: caro-server
     ports:
-      - "1024:1024"  # TCP / Protobuf
-      - "1025:1025"  # WebSocket
+      - "1999:1999"  # WebSocket (typed protobuf binary frames)
     restart: unless-stopped
 
   client:

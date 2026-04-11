@@ -36,10 +36,11 @@ Caro (also known as Gomoku or Five-in-a-Row) is a classic strategy board game. T
 ### Game UI
 - **Client (Phaser 3):** 800x800 board with wood texture, stone animations, sound effects, move history panel
 
-### Cross-Protocol Support
-- **TCP/Protobuf:** lower latency, binary protocol
-- **WebSocket/JSON:** easier browser integration
-- Both run simultaneously on different ports (`1024` TCP, `1025` WebSocket by default)
+### WebSocket Protocol
+- **Binary WebSocket:** BINARY frames carrying TYPED PROTOBUF messages at port 1999
+- `ws://localhost:1999/ratel` endpoint
+- Typed message dispatch via `ClientRequest` records and sealed interface pattern
+- Single-port architecture (no legacy transports)
 
 ---
 
@@ -71,8 +72,8 @@ Caro (also known as Gomoku or Five-in-a-Row) is a classic strategy board game. T
 
 | Component | Technology | Details |
 |-----------|-----------|---------|
-| **Server** | Java 25 + Netty 4.1 | Asynchronous, event-driven, low-latency |
-| **Network Protocol** | Protobuf (TCP) + JSON/gson (WebSocket) | Dual protocol, language-agnostic |
+| **Server** | Java 25 + Netty 4.1.128 | Asynchronous, event-driven, low-latency |
+| **Network Protocol** | Typed Protobuf over WebSocket (binary frames) | Single protocol, typed record dispatch |
 | **Game Logic** | Pure Java 25 (records, switch expressions) | Board state, move validation, win detection, AI |
 | **Client** | Phaser 3 + Vite + Vanilla JS | No framework dependencies (besides Phaser) |
 | **Build** | Gradle 9.x (Kotlin DSL) + Shadow plugin / Vite | Standalone server jar + static client bundle |
@@ -139,16 +140,18 @@ Caro (also known as Gomoku or Five-in-a-Row) is a classic strategy board game. T
 ```
 ┌─────────────────┐         ┌─────────────────────┐
 │  Web Browser    │◄───────►│  Phaser 3 Client    │
-│  (http://...)   │ WS/JSON │  (Vite + JS, :8080) │
-└─────────────────┘         └─────────────────────┘
+│  (http://...)   │ Typed   │  (Vite + JS, :8080) │
+└─────────────────┘ Protobuf└─────────────────────┘
                                       │
-                                      │ WebSocket :1025/ratel
+                                 WS :1999/ratel
+                                 BINARY frames
                                       ▼
 ┌─────────────────────────────────────────────────────┐
 │  Java 25 Netty Server (com.miti99.caro.server)      │
-│  ├─ WebsocketTransferHandler (WS → game events)     │
-│  ├─ ProtobufTransferHandler  (TCP → game events)    │
-│  └─ ServerEventListener_*    (process moves, AI)    │
+│  ├─ WebsocketTransferHandler (WS decoder)           │
+│  ├─ RequestConverter (wire → ClientRequest)         │
+│  ├─ RequestDispatcher (pattern-match dispatch)      │
+│  └─ *Handler classes (14 typed request handlers)    │
 └─────────────────────────────────────────────────────┘
 ```
 
@@ -167,7 +170,7 @@ docker compose up --build -d
 ### Quick Start (Local)
 ```bash
 ./server/gradlew -p server build -x test
-java -jar server/build/libs/caro-server-0.0.1.jar -p 1024
+java -jar server/build/libs/caro-server-0.0.1.jar
 # In another terminal:
 npm --prefix client install
 npm --prefix client run dev
@@ -191,9 +194,9 @@ See `deployment-guide.md` for detailed setup instructions.
 | Dependency | Version | Purpose |
 |-----------|---------|---------|
 | Java | 25 (LTS) | Language runtime |
-| Netty | 4.1.115.Final | Async networking |
-| Protobuf | 3.25.5 | Binary serialization (TCP wire) |
-| gson | 2.11.0 | JSON serialization (WS wire) |
+| Netty | 4.1.128.Final | Async networking |
+| Protobuf | 3.25.5 | Binary serialization (WS wire) |
+| protobufjs | 7.5.4 | JavaScript protobuf codec (client) |
 | JUnit Jupiter | 5.11.3 | Test framework |
 | Gradle | 9.2.1 (wrapper) | Java build tool |
 | Shadow plugin | 8.3.5 | Fat jar packaging |

@@ -2,14 +2,14 @@
 
 ## High-Level Overview
 
-Caro is a **client-server multiplayer game** with dual-protocol networking:
+Caro is a **client-server multiplayer game** with typed-protobuf WebSocket:
 
 ```
 ┌──────────────┐  WebSocket   ┌──────────────────────────────┐
-│ Client       │◄────/JSON───►│                              │
-│ (Phaser 3)   │              │  Java 25 Netty Server        │
-└──────────────┘              │  Port 1024: TCP/Protobuf     │
-                              │  Port 1025: WebSocket/JSON   │
+│ Client       │◄──BINARY────►│                              │
+│ (Phaser 3)   │  Typed Proto │  Java 25 Netty Server        │
+└──────────────┘              │  Port 1999: WebSocket only   │
+                              │  Path: /ratel                │
                               │                              │
                               │  Game Logic:                 │
                               │  - Room Management           │
@@ -18,8 +18,6 @@ Caro is a **client-server multiplayer game** with dual-protocol networking:
                               │  - Win Detection             │
                               └──────────────────────────────┘
 ```
-
-Non-WebSocket HTTP requests to port `1025` are rejected by Netty with a default 400/403 (there is no static file handler).
 
 ---
 
@@ -30,21 +28,19 @@ Non-WebSocket HTTP requests to port `1025` are rejected by Netty with a default 
 **File:** `server/src/main/java/com/miti99/caro/server/`
 
 **Responsibilities:**
-- Listen on TCP (1024) and WebSocket (1025) simultaneously
-- Parse incoming messages (Protobuf or JSON via gson)
+- Listen on WebSocket port 1999 at path `/ratel`
+- Parse incoming binary TYPED PROTOBUF messages (`ClientRequest` oneof wrapper)
 - Execute game logic (move validation, win checks)
-- Broadcast state updates to all connected clients
+- Broadcast state updates via typed `Response` messages (binary frames)
 - Run AI for PVE games
 - Manage room lifecycle (create, join, spectate, cleanup)
 
 **Key Classes:**
-- `SimpleServer` — Entry point; starts Netty bootstrap for both ports
-- `ServerEventListener` — Base for event handlers (in `event/`)
-- `ServerEventListener_CODE_*` — Individual handlers for each ServerEventCode
-- `ProtobufTransferHandler` — Netty pipeline handler for TCP
-- `WebsocketTransferHandler` — Netty pipeline handler for WebSocket (deserializes `Msg` record via gson)
-- `SecondProtobufCodec` — Second-pass protobuf codec
-- `ProtobufProxy` / `WebsocketProxy` — Bootstrap the TCP and WebSocket server sockets
+- `SimpleServer` — Entry point; starts Netty bootstrap for WebSocket only
+- `WebsocketTransferHandler` — Netty pipeline handler (decodes binary frame to `Request` protobuf)
+- `RequestConverter` — Converts protobuf `Request` oneof to `ClientRequest` sealed records
+- `RequestDispatcher` — Pattern-matching switch dispatching `ClientRequest` to typed handlers
+- `*Handler` — 14 individual request handlers (SetNicknameHandler, CreateRoomHandler, GameMoveHandler, etc.)
 
 **Event Codes (ServerEventCode)** — sent by clients:
 ```
@@ -109,7 +105,7 @@ client/src/
 - **Event Bus:** Decouples scenes, services, UI components. `emit(event, data)` → listeners respond.
 - **Game State Service:** Single source of truth for board, room, players.
 - **Connection Service:** Reconnect logic and heartbeat (30-second interval).
-- **WebSocket Message Format:** `{ code: "CODE_GAME_MOVE", data: "{...}", info: "" }`
+- **Client Connection:** Initiates WebSocket handshake to `ws://localhost:1999/ratel`, then sends typed `Request` messages in binary
 
 ---
 
@@ -118,17 +114,16 @@ client/src/
 **File:** `server/src/main/java/com/miti99/caro/common/`
 
 **Responsibilities:**
-- Shared entities (Board, Room, GameMove, Msg, ClientSide)
-- Shared enums (ServerEventCode, ClientEventCode, PieceType, GameResult, RoomType, RoomStatus)
+- Shared entities (Board, Room, GameMove, ClientSide)
+- Shared enums (ClientEventCode, PieceType, GameResult, RoomType, RoomStatus)
 - Game logic (move validation, win detection, AI)
-- Utilities (gson JSON, list, options, stream helpers)
+- Utilities (list, options, stream helpers)
 
 **Key Classes:**
 - `Board` — 15x15 grid, move validation, win/draw detection
 - `Room` — Encapsulates game state, players, spectators
 - `GameMove` — Represents a single move (row, col, piece type, playerId, timestamp)
-- `Msg` — **record** for WebSocket JSON envelope (`code`, `data`, `info`)
-- `ServerTransferData` / `ClientTransferData` — Protobuf-generated wire types
+- `ClientSide` — Player connection metadata
 - `GomokuHelper` — Win detection (4 directions)
 - `GomokuAI` — AI move selection (Easy, Medium, Hard)
 - Enums under `common/enums/`
@@ -141,19 +136,33 @@ Note: `common` is a sub-package within the single `server/` Gradle project. It i
 
 ### Message Format
 
-**WebSocket (JSON, via gson):**
-```json
-{
-  "code": "CODE_GAME_MOVE",
-  "data": "{\"row\": 7, \"col\": 7}",
-  "info": ""
+**WebSocket (Binary Protobuf):**
+
+Client sends `Request` oneof message (defined in `server/src/main/proto/request.proto`):
+```
+message Request {
+  oneof payload {
+    SetNicknameRequest set_nickname = 1;
+    CreateRoomRequest create_room = 2;
+    CreatePveRoomRequest create_pve_room = 3;
+    ... 11 more typed requests ...
+  }
 }
 ```
 
-gson 2.11 serializes the `Msg` record by reading its canonical components (`code`, `data`, `info`). Null components are skipped by default, preserving wire compatibility with the previous setter-based class.
+Server replies with `Response` oneof message (defined in `server/src/main/proto/response.proto`):
+```
+message Response {
+  oneof payload {
+    ClientConnectResponse client_connect = 1;
+    RoomCreateResponse room_create = 2;
+    GameMoveResponse game_move = 3;
+    ... additional typed responses ...
+  }
+}
+```
 
-**TCP (Protobuf):**
-Binary format (serialized via Protobuf 3.25.5).
+Each message is **binary-encoded** in a WebSocket frame (`binaryType='arraybuffer'`).
 
 ### Connection Flow
 
@@ -268,10 +277,14 @@ HttpObjectAggregator (8 KB)
   ↓
 WebSocketServerProtocolHandler ("/ratel")
   ↓
-WebsocketTransferHandler       (decode Msg record via gson, dispatch event listener)
+WebsocketTransferHandler       (decode binary Request frame, dispatch to RequestDispatcher)
+  ↓
+RequestConverter               (Request oneof → ClientRequest sealed variant)
+  ↓
+RequestDispatcher              (pattern-match dispatch to typed *Handler)
 ```
 
-The pipeline has no static file handler. Non-WS HTTP requests to port 1025 return Netty's default HTTP error.
+Outgoing: Handler classes call `ChannelUtils.push(Response)` which encodes to binary and sends `BinaryWebSocketFrame`.
 
 ---
 
@@ -400,7 +413,7 @@ client/  (no dependencies except Phaser 3, Vite dev-only)
 │ └─ caro-client (Nginx + dist/)     │
 └────────────────────────────────────┘
 
-Server listens on `:1024` (TCP) and `:1025` (WebSocket only).
+Server listens on `:1999` (WebSocket only, at `/ratel`).
 ```
 
 Docker Compose runs both services (`caro-server` + `caro-client`) from the single repo context.
@@ -412,23 +425,27 @@ Docker Compose runs both services (`caro-server` + `caro-client`) from the singl
 | File | Purpose |
 |------|---------|
 | `server/src/main/java/com/miti99/caro/server/SimpleServer.java` | Server entry point |
+| `server/src/main/proto/request.proto` | Client→server typed message definitions |
+| `server/src/main/proto/response.proto` | Server→client typed message definitions |
 | `client/src/main.js` | Client entry point (Phaser) |
 | `server/src/main/java/com/miti99/caro/common/entity/Board.java` | Game board state + validation |
 | `server/src/main/java/com/miti99/caro/common/helper/GomokuHelper.java` | Win detection algorithm |
 | `server/src/main/java/com/miti99/caro/common/robot/GomokuAI.java` | AI move selection (3 difficulties) |
 | `server/src/main/java/com/miti99/caro/common/entity/Room.java` | Game room state container |
-| `server/src/main/java/com/miti99/caro/common/entity/Msg.java` | WebSocket JSON envelope (record) |
-| `server/src/main/java/com/miti99/caro/server/event/ServerEventListener_*.java` | Event handlers (game logic) |
-| `server/src/main/java/com/miti99/caro/server/handler/WebsocketTransferHandler.java` | WS codec |
+| `server/src/main/java/com/miti99/caro/server/event/RequestConverter.java` | Protobuf→ClientRequest record |
+| `server/src/main/java/com/miti99/caro/server/event/RequestDispatcher.java` | Dispatch ClientRequest→Handler |
+| `server/src/main/java/com/miti99/caro/server/event/handler/*.java` | 14 typed request handlers |
+| `server/src/main/java/com/miti99/caro/server/handler/WebsocketTransferHandler.java` | WS binary codec |
 | `client/src/scenes/game-scene.js` | Client main gameplay scene |
-| `client/src/services/connection-service.js` | WebSocket client |
-| `client/src/config/protocol-constants.js` | Event code enums |
+| `client/src/services/connection-service.js` | WebSocket client (binary mode) |
+| `client/src/config/protocol-constants.js` | ClientEventCode enum (event-bus keys) |
+| `client/src/generated/protocol.{js,d.ts}` | Protobuf codegen (protobufjs) |
 
 ---
 
 ## Future Architectural Improvements
 
-1. **Proto-over-WebSocket** — migrate WS payloads from JSON to Protobuf (the `.proto` files are already staged under `server/src/main/resources/proto/`).
+1. **Enhanced request validation** — add server-side schema validation for stricter type safety.
 2. **Database integration** — Persist games, leaderboards, accounts.
 3. **Virtual threads** — Java 25 has mature virtual-thread support; some blocking code paths (e.g. AI hard-depth search) could be offloaded.
 4. **Message broker (Kafka/RabbitMQ)** — Decouple game logic from network I/O.

@@ -36,23 +36,23 @@ com.miti99.caro.{common|server}.{subcomponent}
 
 **Patterns:**
 - `FooBar` — Regular classes
-- `FooBarListener` — Event listeners
 - `FooBarHandler` — Protocol/network handlers
-- `FooBarProxy` — Message sending proxies
-- `FooBarTest` — Unit test classes
-- `FooBarImpl` — Concrete implementations (rare)
+- `FooRequest` / `FooRequestRecord` — Sealed record variants (typed requests)
+- `FooTest` — Unit test classes
+- `FooImpl` — Concrete implementations (rare)
 - `AbstractFooBar` — Base classes
 
 **Examples:**
 ```java
 // Good
 public class Board { ... }
-public class ServerEventListener_CODE_GAME_MOVE { ... }
+public class GameMoveHandler { ... }
+public record GameMoveRequestRecord(...) implements ClientRequest { }
 public class GomokuHelper { ... }
 
 // Avoid
-public class board { ... }            // lowercase
-public class GameMoveListener { ... } // unclear purpose
+public class board { ... }              // lowercase
+public class game_move_handler { ... }  // snake_case — use PascalCase
 ```
 
 ### File Organization
@@ -411,7 +411,7 @@ const board = Board();  // Should use new
 /**
  * Connects to the WebSocket server and establishes game communication.
  *
- * @param {string} url - The WebSocket server URL (e.g., 'ws://localhost:1025/ratel')
+ * @param {string} url - The WebSocket server URL (e.g., 'ws://localhost:1999/ratel')
  * @returns {Promise<WebSocket>} Promise resolving to the connected WebSocket
  * @throws {Error} If connection fails or timeout occurs
  */
