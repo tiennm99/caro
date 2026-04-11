@@ -21,7 +21,6 @@ repositories {
 dependencies {
     implementation("io.netty:netty-all:4.1.128.Final")
     implementation("com.google.protobuf:protobuf-java:3.25.5")
-    implementation("com.google.code.gson:gson:2.11.0")
 
     testImplementation(platform("org.junit:junit-bom:5.11.4"))
     testImplementation("org.junit.jupiter:junit-jupiter")
