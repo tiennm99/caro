@@ -1,12 +1,13 @@
 ---
 title: "WebSocket typed-protobuf migration + TCP removal"
 description: "Drop TCP. Rewrite wire protocol as typed protobuf (request.proto / response.proto) on single port 1999. Dispatch via Java sealed records."
-status: pending
+status: implementation-complete
 priority: P2
 effort: 12h
 branch: master
 tags: [refactor, netty, websocket, protobuf, client, breaking-change]
 created: 2026-04-10
+shipped-commits: [945a249, b75733f, 3ad9a7b, ecc6177, cbad690]
 ---
 
 ## Goal
@@ -35,13 +36,13 @@ Strict serial. Each phase must leave server compiling (`./gradlew -p server comp
 ## Phases
 | # | File | Focus | Status |
 |---|------|-------|--------|
-| 01 | [phase-01-proto-schemas-and-build.md](phase-01-proto-schemas-and-build.md) | Author `request.proto` / `response.proto`, Gradle protobuf plugin, delete hand-committed generated Java | pending |
-| 02a | [phase-02a-dispatcher-scaffolding.md](phase-02a-dispatcher-scaffolding.md) | Sealed `ClientRequest` interface + records, `RequestDispatcher`, binary WS pipeline, stub handlers | pending |
-| 02b | [phase-02b-migrate-handlers.md](phase-02b-migrate-handlers.md) | Port every `ServerEventListener_CODE_*` to typed handler; rewrite `ChannelUtils` for `Response` | pending |
-| 03 | [phase-03-server-cleanup.md](phase-03-server-cleanup.md) | Delete `Msg`, `JsonUtils`, `MapHelper`, TCP framing, gson dep; verify 37 tests pass | pending |
-| 04 | [phase-04-client-protobuf.md](phase-04-client-protobuf.md) | `protobufjs-cli` codegen, rewrite `connection-service.js` for typed Request/Response oneof, port 1999 | pending |
-| 05 | [phase-05-infra-and-docs.md](phase-05-infra-and-docs.md) | docker-compose, Dockerfile, README, docs/* | pending |
-| 06 | [phase-06-e2e-smoke-test.md](phase-06-e2e-smoke-test.md) | Manual E2E checklist via docker compose | pending |
+| 01 | [phase-01-proto-schemas-and-build.md](phase-01-proto-schemas-and-build.md) | Author `request.proto` / `response.proto`, Gradle protobuf plugin, delete hand-committed generated Java | done (945a249) |
+| 02a | [phase-02a-dispatcher-scaffolding.md](phase-02a-dispatcher-scaffolding.md) | Sealed `ClientRequest` interface + records, `RequestDispatcher`, binary WS pipeline, stub handlers | done (945a249) |
+| 02b | [phase-02b-migrate-handlers.md](phase-02b-migrate-handlers.md) | Port every `ServerEventListener_CODE_*` to typed handler; rewrite `ChannelUtils` for `Response` | done (b75733f) |
+| 03 | [phase-03-server-cleanup.md](phase-03-server-cleanup.md) | Delete `Msg`, `JsonUtils`, `MapHelper`, TCP framing, gson dep; verify 37 tests pass | done (3ad9a7b) |
+| 04 | [phase-04-client-protobuf.md](phase-04-client-protobuf.md) | `protobufjs-cli` codegen, rewrite `connection-service.js` for typed Request/Response oneof, port 1999 | done (ecc6177) |
+| 05 | [phase-05-infra-and-docs.md](phase-05-infra-and-docs.md) | docker-compose, Dockerfile, README, docs/* | done (cbad690) |
+| 06 | [phase-06-e2e-smoke-test.md](phase-06-e2e-smoke-test.md) | Manual E2E checklist via docker compose | deferred (user-run) |
 
 ## Audit Notes (inbound/outbound schemas, from codebase read)
 Condensed from `server/src/main/java/com/miti99/caro/server/event/*` and `client/src/**/*.js`:
