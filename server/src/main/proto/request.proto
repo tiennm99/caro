@@ -1,0 +1,44 @@
+syntax = "proto3";
+
+package miti99.caro.protocol;
+
+option java_package = "com.miti99.caro.protocol";
+option java_multiple_files = true;
+
+// Wrapper for all client -> server messages. The oneof case IS the event code.
+message Request {
+  oneof payload {
+    HeartbeatRequest heartbeat = 1;
+    SetNicknameRequest set_nickname = 2;
+    SetClientInfoRequest set_client_info = 3;
+    CreateRoomRequest create_room = 4;
+    CreatePveRoomRequest create_pve_room = 5;
+    GetRoomsRequest get_rooms = 6;
+    JoinRoomRequest join_room = 7;
+    GameStartingRequest game_starting = 8;
+    GameReadyRequest game_ready = 9;
+    GameMoveRequest game_move = 10;
+    GameResetRequest game_reset = 11;
+    WatchGameRequest watch_game = 12;
+    WatchGameExitRequest watch_game_exit = 13;
+    ClientExitRequest client_exit = 14;
+  }
+}
+
+message HeartbeatRequest {}
+message SetNicknameRequest { string nickname = 1; }
+message SetClientInfoRequest { string version = 1; }
+message CreateRoomRequest {}
+message CreatePveRoomRequest { int32 difficulty = 1; }
+message GetRoomsRequest {}
+message JoinRoomRequest { int32 room_id = 1; }
+message GameStartingRequest {}
+message GameReadyRequest {}
+message GameMoveRequest {
+  int32 row = 1;
+  int32 col = 2;
+}
+message GameResetRequest {}
+message WatchGameRequest { int32 room_id = 1; }
+message WatchGameExitRequest {}
+message ClientExitRequest {}

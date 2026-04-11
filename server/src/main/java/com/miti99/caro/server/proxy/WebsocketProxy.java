@@ -1,5 +1,14 @@
 package com.miti99.caro.server.proxy;
 
+import java.net.InetSocketAddress;
+import java.util.Timer;
+import java.util.concurrent.TimeUnit;
+
+import com.miti99.caro.common.print.SimplePrinter;
+import com.miti99.caro.server.ServerContains;
+import com.miti99.caro.server.handler.WebsocketTransferHandler;
+import com.miti99.caro.server.timer.RoomClearTask;
+
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
@@ -15,19 +24,9 @@ import io.netty.handler.codec.http.HttpServerCodec;
 import io.netty.handler.codec.http.websocketx.WebSocketServerProtocolHandler;
 import io.netty.handler.stream.ChunkedWriteHandler;
 import io.netty.handler.timeout.IdleStateHandler;
-import com.miti99.caro.common.print.SimplePrinter;
 
-import com.miti99.caro.server.ServerContains;
-import com.miti99.caro.server.handler.ProtobufTransferHandler;
-import com.miti99.caro.server.handler.WebsocketTransferHandler;
-import com.miti99.caro.server.timer.RoomClearTask;
+public class WebsocketProxy {
 
-import java.net.InetSocketAddress;
-import java.util.Timer;
-import java.util.concurrent.TimeUnit;
-
-public class WebsocketProxy implements Proxy{
-    @Override
     public void start(int port) throws InterruptedException {
         EventLoopGroup parentGroup = Epoll.isAvailable() ? new EpollEventLoopGroup() : new NioEventLoopGroup();
         EventLoopGroup childGroup = Epoll.isAvailable() ? new EpollEventLoopGroup() : new NioEventLoopGroup();
@@ -38,7 +37,7 @@ public class WebsocketProxy implements Proxy{
                     .localAddress(new InetSocketAddress(port))
                     .childHandler(new ChannelInitializer<SocketChannel>() {
                         @Override
-                        protected void initChannel(SocketChannel ch) throws Exception {
+                        protected void initChannel(SocketChannel ch) {
                             ch.pipeline()
                                     .addLast(new IdleStateHandler(60 * 30, 0, 0, TimeUnit.SECONDS))
                                     .addLast(new HttpServerCodec())
@@ -49,14 +48,19 @@ public class WebsocketProxy implements Proxy{
                         }
                     });
 
-            ChannelFuture f = bootstrap .bind().sync();
+            ChannelFuture f = bootstrap.bind().sync();
 
             SimplePrinter.serverLog("The websocket server was successfully started on port " + port);
+
+            ServerContains.THREAD_EXCUTER.execute(() -> {
+                Timer timer = new Timer();
+                timer.schedule(new RoomClearTask(), 0L, 3000L);
+            });
+
             f.channel().closeFuture().sync();
         } finally {
             parentGroup.shutdownGracefully();
             childGroup.shutdownGracefully();
         }
-
     }
 }

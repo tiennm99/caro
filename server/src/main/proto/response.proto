@@ -1,0 +1,117 @@
+syntax = "proto3";
+
+package miti99.caro.protocol;
+
+option java_package = "com.miti99.caro.protocol";
+option java_multiple_files = true;
+
+// Wrapper for all server -> client messages. The oneof case IS the event code.
+message Response {
+  oneof payload {
+    ClientConnectResponse client_connect = 1;
+    NicknameSetResponse nickname_set = 2;
+    ShowOptionsResponse show_options = 3;
+    ShowRoomsResponse show_rooms = 4;
+    RoomCreateSuccessResponse room_create_success = 5;
+    RoomJoinSuccessResponse room_join_success = 6;
+    RoomJoinFailFullResponse room_join_fail_full = 7;
+    RoomJoinFailNotFoundResponse room_join_fail_not_found = 8;
+    RoomPlayFailNotFoundResponse room_play_fail_not_found = 9;
+    GameStartingResponse game_starting = 10;
+    GameReadyResponse game_ready = 11;
+    GameMoveSuccessResponse game_move_success = 12;
+    GameMoveInvalidResponse game_move_invalid = 13;
+    GameMoveOccupiedResponse game_move_occupied = 14;
+    GameMoveOutOfBoundsResponse game_move_out_of_bounds = 15;
+    GameMoveNotYourTurnResponse game_move_not_your_turn = 16;
+    GameOverResponse game_over = 17;
+    PveDifficultyNotSupportResponse pve_difficulty_not_support = 18;
+    WatchGameSuccessResponse watch_game_success = 19;
+    ClientExitResponse client_exit = 20;
+  }
+}
+
+message ClientConnectResponse { int32 client_id = 1; }
+
+// invalid_length = 0 means "prompt only — ask the user for a nickname"
+message NicknameSetResponse { int32 invalid_length = 1; }
+
+message ShowOptionsResponse {}
+
+message RoomSummary {
+  int32 room_id = 1;
+  string room_owner = 2;
+  int32 room_client_count = 3;
+  string room_type = 4;
+}
+
+message ShowRoomsResponse { repeated RoomSummary rooms = 1; }
+
+message RoomCreateSuccessResponse {
+  int32 id = 1;
+  string room_owner = 2;
+  string room_type = 3;
+}
+
+message RoomJoinSuccessResponse {
+  int32 client_id = 1;
+  string client_nickname = 2;
+  int32 room_id = 3;
+  string room_owner = 4;
+  int32 room_client_count = 5;
+}
+
+message RoomJoinFailFullResponse {
+  int32 room_id = 1;
+  string room_owner = 2;
+}
+
+message RoomJoinFailNotFoundResponse { int32 room_id = 1; }
+
+message RoomPlayFailNotFoundResponse {}
+
+message GameStartingResponse {
+  int32 room_id = 1;
+  int32 black_player_id = 2;
+  string black_player_nickname = 3;
+  int32 white_player_id = 4;
+  string white_player_nickname = 5;
+  int32 board_size = 6;
+}
+
+message GameReadyResponse {
+  string client_nickname = 1;
+  string status = 2;
+  int32 client_id = 3;
+}
+
+message GameMoveSuccessResponse {
+  int32 row = 1;
+  int32 col = 2;
+  string piece = 3;
+  string player_nickname = 4;
+  int32 player_id = 5;
+}
+
+message GameMoveInvalidResponse {}
+message GameMoveOccupiedResponse {}
+message GameMoveOutOfBoundsResponse {}
+message GameMoveNotYourTurnResponse {}
+
+message GameOverResponse {
+  string result = 1;
+  string winner_nickname = 2;
+}
+
+message PveDifficultyNotSupportResponse {}
+
+message WatchGameSuccessResponse {
+  string owner = 1;
+  string status = 2;
+}
+
+message ClientExitResponse {
+  int32 room_id = 1;
+  int32 exit_client_id = 2;
+  string exit_client_nickname = 3;
+}

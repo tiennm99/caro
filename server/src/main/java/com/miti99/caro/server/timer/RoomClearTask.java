@@ -3,13 +3,10 @@ package com.miti99.caro.server.timer;
 import java.util.Map;
 import java.util.TimerTask;
 
-import com.miti99.caro.common.entity.ClientSide;
 import com.miti99.caro.common.entity.Room;
 import com.miti99.caro.common.enums.RoomStatus;
-import com.miti99.caro.common.enums.ServerEventCode;
 import com.miti99.caro.common.print.SimplePrinter;
 import com.miti99.caro.server.ServerContains;
-import com.miti99.caro.server.event.ServerEventListener;
 
 /**
  * Periodically cleans up idle or expired rooms.
@@ -55,11 +52,7 @@ public class RoomClearTask extends TimerTask {
 	}
 
 	private void closeRoom(Room room) {
-		if (!room.getClientSideList().isEmpty()) {
-			ClientSide first = room.getClientSideList().get(0);
-			ServerEventListener.get(ServerEventCode.CODE_CLIENT_EXIT).call(first, null);
-		} else {
-			ServerContains.removeRoom(room.getId());
-		}
+		// TODO phase 02b: notify remaining clients via ClientExitHandler before removal.
+		ServerContains.removeRoom(room.getId());
 	}
 }

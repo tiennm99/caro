@@ -1,39 +1,49 @@
 package com.miti99.caro.server.handler;
 
+import com.google.protobuf.InvalidProtocolBufferException;
+import com.miti99.caro.common.channel.ChannelUtils;
+import com.miti99.caro.common.entity.ClientSide;
+import com.miti99.caro.common.enums.ClientRole;
+import com.miti99.caro.common.enums.ClientStatus;
+import com.miti99.caro.common.print.SimplePrinter;
+import com.miti99.caro.protocol.ClientConnectResponse;
+import com.miti99.caro.protocol.NicknameSetResponse;
+import com.miti99.caro.protocol.Request;
+import com.miti99.caro.protocol.Response;
+import com.miti99.caro.server.ServerContains;
+import com.miti99.caro.server.event.RequestConverter;
+import com.miti99.caro.server.event.RequestDispatcher;
+import com.miti99.caro.server.event.request.ClientRequest;
+import com.miti99.caro.server.event.request.HeartbeatRequestRecord;
+
+import io.netty.buffer.ByteBufUtil;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.channel.SimpleChannelInboundHandler;
-import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
+import io.netty.handler.codec.http.websocketx.BinaryWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.WebSocketServerProtocolHandler;
 import io.netty.handler.timeout.IdleState;
 import io.netty.handler.timeout.IdleStateEvent;
-import com.miti99.caro.common.channel.ChannelUtils;
-import com.miti99.caro.common.entity.ClientSide;
-import com.miti99.caro.common.entity.Msg;
-import com.miti99.caro.common.entity.ServerTransferData.ServerTransferDataProtoc;
-import com.miti99.caro.common.enums.ClientEventCode;
-import com.miti99.caro.common.enums.ClientRole;
-import com.miti99.caro.common.enums.ClientStatus;
-import com.miti99.caro.common.enums.ServerEventCode;
-import com.miti99.caro.common.print.SimplePrinter;
-import com.miti99.caro.server.ServerContains;
-import com.miti99.caro.server.event.ServerEventListener;
-import com.miti99.caro.common.utils.JsonUtils;
 
-import java.util.Objects;
-
-public class WebsocketTransferHandler extends SimpleChannelInboundHandler<TextWebSocketFrame> {
+public class WebsocketTransferHandler extends SimpleChannelInboundHandler<BinaryWebSocketFrame> {
 
     @Override
-    protected void channelRead0(ChannelHandlerContext ctx, TextWebSocketFrame frame) throws Exception {
-        var msg = JsonUtils.fromJson(frame.text(), Msg.class);
-        var code = ServerEventCode.valueOf(msg.code());
-        if (!Objects.equals(code, ServerEventCode.CODE_CLIENT_HEAD_BEAT)) {
-            var client = ServerContains.CLIENT_SIDE_MAP.get(getId(ctx.channel()));
-            SimplePrinter.serverLog(client.getId() + " | " + client.getNickname() + " do:" + code.getMsg());
-            ServerEventListener.get(code).call(client, msg.data());
+    protected void channelRead0(ChannelHandlerContext ctx, BinaryWebSocketFrame frame) {
+        byte[] bytes = ByteBufUtil.getBytes(frame.content());
+        Request raw;
+        try {
+            raw = Request.parseFrom(bytes);
+        } catch (InvalidProtocolBufferException e) {
+            SimplePrinter.serverLog("WARN malformed request: " + e.getMessage());
+            return;
         }
+        ClientRequest req = RequestConverter.convert(raw);
+        ClientSide client = ServerContains.CLIENT_SIDE_MAP.get(getId(ctx.channel()));
+        if (!(req instanceof HeartbeatRequestRecord)) {
+            SimplePrinter.serverLog(
+                    client.getId() + " | " + client.getNickname() + " do: " + req.getClass().getSimpleName());
+        }
+        RequestDispatcher.dispatch(client, req);
     }
 
     @Override
@@ -41,20 +51,19 @@ public class WebsocketTransferHandler extends SimpleChannelInboundHandler<TextWe
         if (cause instanceof java.io.IOException) {
             clientOfflineEvent(ctx.channel());
         } else {
-            SimplePrinter.serverLog("ERROR：" + cause.getMessage());
+            SimplePrinter.serverLog("ERROR: " + cause.getMessage());
             cause.printStackTrace();
         }
     }
 
     @Override
     public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
-        if (evt instanceof IdleStateEvent) {
-            IdleStateEvent event = (IdleStateEvent) evt;
+        if (evt instanceof IdleStateEvent event) {
             if (event.state() == IdleState.READER_IDLE) {
                 try {
                     clientOfflineEvent(ctx.channel());
                     ctx.channel().close();
-                } catch (Exception e) {
+                } catch (Exception ignored) {
                 }
             }
         } else if (evt instanceof WebSocketServerProtocolHandler.HandshakeComplete) {
@@ -65,12 +74,16 @@ public class WebsocketTransferHandler extends SimpleChannelInboundHandler<TextWe
             clientSide.setRole(ClientRole.BLACK_PLAYER);
 
             ServerContains.CLIENT_SIDE_MAP.put(clientSide.getId(), clientSide);
-            SimplePrinter.serverLog("Has client connect to the server：" + clientSide.getId());
+            SimplePrinter.serverLog("Has client connect to the server: " + clientSide.getId());
             new Thread(() -> {
                 try {
                     Thread.sleep(2000L);
-                    ChannelUtils.pushToClient(ch, ClientEventCode.CODE_CLIENT_CONNECT, String.valueOf(clientSide.getId()));
-                    ChannelUtils.pushToClient(ch, ClientEventCode.CODE_CLIENT_NICKNAME_SET, null);
+                    ChannelUtils.push(ch, Response.newBuilder()
+                            .setClientConnect(ClientConnectResponse.newBuilder().setClientId(clientSide.getId()))
+                            .build());
+                    ChannelUtils.push(ch, Response.newBuilder()
+                            .setNicknameSet(NicknameSetResponse.newBuilder().setInvalidLength(0))
+                            .build());
                 } catch (InterruptedException ignored) {
                 }
             }).start();
@@ -93,8 +106,8 @@ public class WebsocketTransferHandler extends SimpleChannelInboundHandler<TextWe
         int clientId = getId(channel);
         ClientSide client = ServerContains.CLIENT_SIDE_MAP.get(clientId);
         if (client != null) {
-            SimplePrinter.serverLog("Has client exit to the server：" + clientId + " | " + client.getNickname());
-            ServerEventListener.get(ServerEventCode.CODE_CLIENT_OFFLINE).call(client, null);
+            SimplePrinter.serverLog("Has client exit to the server: " + clientId + " | " + client.getNickname());
+            // TODO phase 02b: wire to ClientOfflineHandler.handle(client)
         }
     }
 }
